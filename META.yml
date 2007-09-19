@@ -2,7 +2,7 @@
 abstract: create and use a local lib/ for perl modules with PERL5LIB
 author: Matt S Trout <mst@shadowcat.co.uk> http://www.shadowcat.co.uk/
 distribution_type: module
-generated_by: Module::Install version 0.670
+generated_by: Module::Install version 0.67
 license: perl
 meta-spec: 
   url: http://module-build.sourceforge.net/META-spec-v1.3.html
@@ -19,4 +19,4 @@ requires:
   ExtUtils::ParseXS: 0
   Module::Build: 0.28
   perl: 5.8.1
-version: 1.000000
+version: 1.001000

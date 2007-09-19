@@ -18,12 +18,22 @@ BEGIN {
     push(@ARGV,$ENV{PERL_MM_OPT});
 
     system($^X, '-MExtUtils::MakeMaker 6.31', '-e1');
-    my $r = $? >> 8;
+    my $eumm = $? >> 8;
+
+    system($^X, '-MCPAN 1.80', '-e1');
+    my $cpan = $? >> 8;
+    my $cpan_command = '';
 
     # XXX - remove the force on EUMM once its test suite survive PERL_MM_OPT
 
-    if ($r) { # non-zero exit
-      system($^X, '-MCPAN', '-e', 'force("install","ExtUtils::MakeMaker");');
+    if ($eumm) { # non-zero exit
+      $cpan_command .= 'force("install","ExtUtils::MakeMaker"); ';
+    }
+    if ($cpan) {
+      $cpan_command .= 'install("CPAN"); ';
+    }
+    if(length $cpan_command) {
+      system($^X, '-MCPAN', '-e', $cpan_command);
     }
 
   }
@@ -34,17 +44,21 @@ use inc::Module::Install;
 name 'local-lib';
 all_from 'lib/local/lib.pm';
 
-include('CPAN');
-include('CPAN::HandleConfig');
-include('CPAN::Debug');
-include('CPAN::Version');
-include('CPAN::Tarzip');
-
 requires 'ExtUtils::MakeMaker' => '6.31'; # version INSTALL_BASE was added
 requires 'ExtUtils::CBuilder'; # this and ParseXS are needed for MB C_support
 requires 'ExtUtils::ParseXS';
 requires 'Module::Build' => '0.28'; # lib -> lib/perl5 change
 requires 'CPAN' => '1.80'; # sudo support
+
+# No, really. See
+# https://rt.cpan.org/Public/Bug/Display.html?id=23735
+# for why CPAN now sets the CPANPLUS env var.
+# trouble is this means we can't auto_install(_now) CPAN itself
+# without this beautiful hack
+
+my $no_cpanplus_env = !exists $ENV{PERL5_CPANPLUS_IS_RUNNING};
+require CPAN;
+delete $ENV{PERL5_CPANPLUS_IS_RUNNING} if $no_cpanplus_env;
 
 if ($bootstrapping) {
   auto_install_now;
