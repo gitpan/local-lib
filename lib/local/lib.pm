@@ -3,15 +3,15 @@ use warnings;
 
 package local::lib;
 
-use 5.8.1; # probably works with earlier versions but I'm not supporting them
-           # (patches would, of course, be welcome)
+use 5.008001; # probably works with earlier versions but I'm not supporting them
+              # (patches would, of course, be welcome)
 
 use File::Spec ();
 use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.001000'; # 1.1.0
+our $VERSION = '1.002000'; # 1.2.0
 
 sub import {
   my ($class, $path) = @_;
@@ -195,12 +195,12 @@ sub ensure_dir_structure_for {
   }
 }
 
-sub INTERPOLATE_PATH () { 1 }
-sub LITERAL_PATH     () { 0 }
+sub INTERPOLATE_ENV () { 1 }
+sub LITERAL_ENV     () { 0 }
 
 sub print_environment_vars_for {
   my ($class, $path) = @_;
-  my @envs = $class->build_environment_vars_for($path, LITERAL_PATH);
+  my @envs = $class->build_environment_vars_for($path, LITERAL_ENV);
   my $out = '';
 
   # rather basic csh detection, goes on the assumption that something won't
@@ -247,7 +247,7 @@ sub build_csh_env_declaration {
 
 sub setup_env_hash_for {
   my ($class, $path) = @_;
-  my %envs = $class->build_environment_vars_for($path, INTERPOLATE_PATH);
+  my %envs = $class->build_environment_vars_for($path, INTERPOLATE_ENV);
   @ENV{keys %envs} = values %envs;
 }
 
@@ -259,10 +259,15 @@ sub build_environment_vars_for {
     PERL5LIB => join(':',
                   $class->install_base_perl_path($path),
                   $class->install_base_arch_path($path),
+                  ($ENV{PERL5LIB} ?
+                    ($interpolate == INTERPOLATE_ENV
+                      ? ($ENV{PERL5LIB})
+                      : ('$PERL5LIB'))
+                    : ())
                 ),
     PATH => join(':',
               $class->install_base_bin_path($path),
-              ($interpolate == INTERPOLATE_PATH
+              ($interpolate == INTERPOLATE_ENV
                 ? $ENV{PATH}
                 : '$PATH')
              ),
@@ -309,13 +314,15 @@ From the shell -
 
 To bootstrap if you don't have local::lib itself installed -
 
-  $ perl -MCPAN -eshell # you only need to do this if you don't have a ~/.cpan
-  cpan> exit
   <download local::lib tarball from CPAN, unpack and cd into dir>
+
   $ perl Makefile.PL --bootstrap
   $ make test && make install
+
   $ echo 'eval $(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)' >>~/.bashrc
+
   # Or for C shells...
+
   $ /bin/csh
   % echo $SHELL
   /bin/csh

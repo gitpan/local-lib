@@ -3,8 +3,10 @@ use warnings;
 use vars qw($bootstrapping);
 
 BEGIN {
-  if (grep { /^--bootstrap(?:=(.*))?$/ } @ARGV) {
+  if (my ($x) = grep { /^--bootstrap(?:=.*)?$/ } @ARGV) {
+    @ARGV = grep { !/^--bootstrap(?:=.*)?$/ } @ARGV;
     $bootstrapping = 1;
+    $x =~ /^--bootstrap(?:=(.*))?$/;
     my @args = (defined $1 ? ($1) : ());
 
     {
@@ -16,6 +18,7 @@ BEGIN {
     local::lib->import(@args);
 
     push(@ARGV,$ENV{PERL_MM_OPT});
+    push(@ARGV, map { "-I$_" } split(':',$ENV{PERL5LIB}));
 
     system($^X, '-MExtUtils::MakeMaker 6.31', '-e1');
     my $eumm = $? >> 8;
@@ -24,18 +27,41 @@ BEGIN {
     my $cpan = $? >> 8;
     my $cpan_command = '';
 
+    system($^X, '-MCPAN', '-e',
+      'my $done; require ExtUtils::MakeMaker;
+       my $orig = ExtUtils::MakeMaker->can("prompt");
+       *ExtUtils::MakeMaker::prompt = sub {
+         if (!$done && $_[0] =~ /manual configuration/) {
+           $done++;
+           return "no";
+         }
+         return $orig->(@_);
+       };
+       CPAN::Config->load;
+       unless ($done || -w $CPAN::Config->{keep_source_where}) {
+         my $save = $CPAN::Config->{urllist};
+         delete @{$CPAN::Config}{keys %$CPAN::Config};
+         $CPAN::Config->{urllist} = $save;
+         CPAN::Config->init;
+       }'
+    );
+
+    $ENV{PERL_MM_USE_DEFAULT} = 1;
+
     # XXX - remove the force on EUMM once its test suite survive PERL_MM_OPT
 
     if ($eumm) { # non-zero exit
       $cpan_command .= 'force("install","ExtUtils::MakeMaker"); ';
     }
     if ($cpan) {
-      $cpan_command .= 'install("CPAN"); ';
+      $cpan_command .= 'force("install","CPAN"); ';
     }
     if(length $cpan_command) {
       system($^X, '-MCPAN', '-e', $cpan_command);
     }
-
+    if ($cpan) {
+      system($^X, '-MCPAN', '-e', 'CPAN::Config->load; CPAN::Config->commit;');
+    }
   }
 }
 
