@@ -12,7 +12,7 @@ inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/local/lib.pm
 Makefile.PL
-MANIFEST
+MANIFEST			This list of files
 META.yml
 t/classmethod.t
 t/pipeline.t
