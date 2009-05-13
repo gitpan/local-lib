@@ -1,5 +1,12 @@
 Revision history for local::lib
 
+1.003004 2009-05-12
+        - Additional documentation and examples concerning having multiple
+          local::lib enviornments (amiri)
+
+        - Some install tests courtesy of Hans Dieter Pearcey <hdp@cpan.org>.
+          Thanks!
+
 1.003003 2009-04-09
         - Expose the internals per RT #36846.
         - Fix the MANIFEST up a bit.

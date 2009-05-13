@@ -16,4 +16,8 @@ MANIFEST			This list of files
 META.yml
 t/classmethod.t
 t/pipeline.t
-t/var/splat/.modulebuildrc
+t/dist/EUMM/lib/EUMM.pm
+t/dist/EUMM/Makefile.PL
+t/dist/MB/Build.PL
+t/dist/MB/lib/MB.pm
+t/install.t
