@@ -21,3 +21,4 @@ t/dist/EUMM/Makefile.PL
 t/dist/MB/Build.PL
 t/dist/MB/lib/MB.pm
 t/install.t
+eg/scripted_install.pl
