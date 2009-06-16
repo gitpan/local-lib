@@ -21,4 +21,3 @@ t/dist/MB/Build.PL
 t/dist/MB/lib/MB.pm
 t/install.t
 t/pipeline.t
-eg/scripted_install.pl
