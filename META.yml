@@ -21,10 +21,11 @@ no_index:
 requires:
   CPAN: 1.80
   ExtUtils::CBuilder: 0
+  ExtUtils::Install: 1.43
   ExtUtils::MakeMaker: 6.31
   ExtUtils::ParseXS: 0
   Module::Build: 0.28
   perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.004003
+version: 1.004004
