@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.004004'; # 1.4.4
+our $VERSION = '1.004005'; # 1.4.5
 
 sub import {
   my ($class, @args) = @_;
@@ -415,6 +415,12 @@ You can also pass --bootstrap=~/foo to get a different location -
   $ make test && make install
 
   $ echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >>~/.bashrc
+
+If you're on a slower machine, or are operating under draconian disk space
+limitations, you can disable the automatic generation of manpages from POD when
+installing modules by using the C<--no-manpages> argument when bootstrapping:
+
+  $ perl Makefile.PL --bootstrap --no-manpages
 
 If you want to install multiple Perl module environments, say for application evelopment, 
 install local::lib globally and then:

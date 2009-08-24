@@ -1,5 +1,10 @@
 Revision history for local::lib
 
+1.004005 2009-08-23
+        - Add the --no-manpages option to bootstraping to tell EUMM / MB to not
+          generate manpages from POD. Thanks to RKITOVER for providing the
+          necessary values for CPAN.pm's configuration.
+
 1.004004 2009-08-05
 
         - Add dependency on Extutils::Install 1.43 and install in --bootstrap
