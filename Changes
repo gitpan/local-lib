@@ -1,5 +1,16 @@
 Revision history for local::lib
 
+1.004007 2009-09-02
+
+        - Ensure that $ENV{PERL5LIB} and @INC are always de-duped, stopping
+          them from growing if local::lib is invoked multiple times for the
+          same path. (t0m)
+
+        - Doc improvements by kurisuto@irc.perl.org/#catalyst.
+
+        - Cleaned up indentation of code lines in the POD. Everything should be
+          nice and flush, now.
+
 1.004006 2009-08-25
         - Fix parsing of --self-contained and local lib directory. It's now
           possible to specify flags and the directory in any order. Also made
