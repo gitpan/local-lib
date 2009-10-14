@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.004007'; # 1.4.7
+our $VERSION = '1.004008'; # 1.4.7
 my @KNOWN_FLAGS = (qw/--self-contained/);
 
 sub import {
@@ -410,7 +410,7 @@ From the shell -
   export PERL5LIB='/home/username/perl/lib/perl5:/home/username/perl/lib/perl5/i386-linux'
   export PATH="/home/username/perl/bin:$PATH"
 
-The bootstrapping technique
+=head2 The bootstrapping technique
 
 A typical way to install local::lib is using what is known as the
 "bootstrapping" technique.  You would do this if your system administrator
@@ -451,6 +451,11 @@ You can also pass --bootstrap=~/foo to get a different location -
   make test && make install
 
   echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >>~/.bashrc
+
+After writing your shell configuration file, be sure to re-read it to get the
+changed settings into your current shell's environment. Bourne shells use C<.
+~/.bashrc> for this, whereas C shells use C<source ~/.cshrc>. Replace .bashrc or
+.cshrc with the name of the file you wrote above with the echo command.
 
 If you're on a slower machine, or are operating under draconian disk space
 limitations, you can disable the automatic generation of manpages from POD when
@@ -784,9 +789,15 @@ section. Many thanks!
 
 Patch to add Win32 support contributed by Curtis Jewell <csjewell@cpan.org>.
 
+=head1 COPYRIGHT
+
+Copyright (c) 2007 - 2009 the local::lib L</AUTHOR> and L</CONTRIBUTORS> as
+listed above.
+
 =head1 LICENSE
 
-This library is free software under the same license as perl itself.
+This library is free software and may be distributed under the same terms
+as perl itself.
 
 =cut
 
