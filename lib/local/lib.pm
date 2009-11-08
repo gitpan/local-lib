@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.004008'; # 1.4.7
+our $VERSION = '1.004009'; # 1.4.9
 my @KNOWN_FLAGS = (qw/--self-contained/);
 
 sub import {
@@ -21,7 +21,7 @@ Please see `perldoc local::lib` for directions on using this module.
 DEATH
 
   # Remember what PERL5LIB was when we started
-  my $perl5lib = $ENV{PERL5LIB};
+  my $perl5lib = $ENV{PERL5LIB} || '';
 
   my %arg_store;
   for my $arg (@args) {
@@ -55,11 +55,11 @@ DEATH
     # over privlibexp and archlibexp
 
     @INC = _uniq(
-      $class->install_base_perl_path($arg_store{path}),
       $class->install_base_arch_path($arg_store{path}),
+      $class->install_base_perl_path($arg_store{path}),
       split( $Config{path_sep}, $perl5lib ),
+      $Config::Config{archlibexp},
       $Config::Config{privlibexp},
-      $Config::Config{archlibexp}
     );
 
     # We explicitly set PERL5LIB here to the above de-duped list to prevent
@@ -453,9 +453,27 @@ You can also pass --bootstrap=~/foo to get a different location -
   echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >>~/.bashrc
 
 After writing your shell configuration file, be sure to re-read it to get the
-changed settings into your current shell's environment. Bourne shells use C<.
-~/.bashrc> for this, whereas C shells use C<source ~/.cshrc>. Replace .bashrc or
-.cshrc with the name of the file you wrote above with the echo command.
+changed settings into your current shell's environment.
+
+  . ~/.bashrc
+
+If you are using C shell, you can do this as follows:
+
+  /bin/csh
+  echo $SHELL
+  /bin/csh
+  perl -I$HOME/perl5/lib/perl5 -Mlocal::lib >> ~/.cshrc
+
+  source ~/.cshrc
+
+You can also pass --bootstrap=~/foo to get a different location -
+
+  perl Makefile.PL --bootstrap=~/foo
+  make test && make install
+
+  echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >> ~/.bashrc
+
+  . ~/.bashrc
 
 If you're on a slower machine, or are operating under draconian disk space
 limitations, you can disable the automatic generation of manpages from POD when
@@ -767,6 +785,10 @@ auto_install fixes kindly sponsored by http://www.takkle.com/
 
 =head1 CONTRIBUTORS
 
+Chris Nehren <apeiron@cpan.org> now oversees maintenance of local::lib, in
+addition to providing doc patches and bootstrap fixes to prevent users from
+shooting themselves in the foot (it's more likely than you think).
+
 Patches to correctly output commands for csh style shells, as well as some
 documentation additions, contributed by Christopher Nehren <apeiron@cpan.org>.
 
@@ -788,6 +810,12 @@ pattern of Freenode IRC contributed the beginnings of the Troubleshooting
 section. Many thanks!
 
 Patch to add Win32 support contributed by Curtis Jewell <csjewell@cpan.org>.
+
+kgish/#perl-help@irc.perl.org suggested revamping the section on sourcing the
+shell file to make it clearer to those quickly reading the POD.
+
+t0m and chrisa on #local-lib@irc.perl.org pointed out a PERL5LIB ordering issue
+with C<--self-contained>.
 
 =head1 COPYRIGHT
 
