@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.004009'; # 1.4.9
+our $VERSION = '1.005000'; # 1.5.0
 my @KNOWN_FLAGS = (qw/--self-contained/);
 
 sub import {
@@ -49,17 +49,17 @@ DEATH
     }
   }
 
-  if($arg_store{'self-contained'}) {
+  if($arg_store{self-contained}) {
     # The only directories that remain are those that we just defined and those
     # where core modules are stored.  We put PERL5LIB first, so it'll be favored
     # over privlibexp and archlibexp
 
     @INC = _uniq(
-      $class->install_base_arch_path($arg_store{path}),
       $class->install_base_perl_path($arg_store{path}),
+      $class->install_base_arch_path($arg_store{path}),
       split( $Config{path_sep}, $perl5lib ),
-      $Config::Config{archlibexp},
       $Config::Config{privlibexp},
+      $Config::Config{archlibexp}
     );
 
     # We explicitly set PERL5LIB here to the above de-duped list to prevent
@@ -350,7 +350,7 @@ sub build_environment_vars_for {
     PERL5LIB => join($Config{path_sep},
                   $class->install_base_perl_path($path),
                   $class->install_base_arch_path($path),
-                  ($ENV{PERL5LIB} ?
+                  (($ENV{PERL5LIB}||()) ?
                     ($interpolate == INTERPOLATE_ENV
                       ? ($ENV{PERL5LIB})
                       : (($^O ne 'MSWin32') ? '$PERL5LIB' : '%PERL5LIB%' ))
@@ -359,7 +359,7 @@ sub build_environment_vars_for {
     PATH => join($Config{path_sep},
               $class->install_base_bin_path($path),
               ($interpolate == INTERPOLATE_ENV
-                ? $ENV{PATH}
+                ? ($ENV{PATH}||())
                 : (($^O ne 'MSWin32') ? '$PATH' : '%PATH%' ))
              ),
   )
@@ -397,7 +397,7 @@ In code -
 
 From the shell -
 
-  # Install LWP and it's missing dependencies to the 'my_lwp' directory
+  # Install LWP and its missing dependencies to the 'my_lwp' directory
   perl -MCPAN -Mlocal::lib=my_lwp -e 'CPAN::install(LWP)'
 
   # Install LWP and *all non-core* dependencies to the 'my_lwp' directory 
@@ -453,27 +453,9 @@ You can also pass --bootstrap=~/foo to get a different location -
   echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >>~/.bashrc
 
 After writing your shell configuration file, be sure to re-read it to get the
-changed settings into your current shell's environment.
-
-  . ~/.bashrc
-
-If you are using C shell, you can do this as follows:
-
-  /bin/csh
-  echo $SHELL
-  /bin/csh
-  perl -I$HOME/perl5/lib/perl5 -Mlocal::lib >> ~/.cshrc
-
-  source ~/.cshrc
-
-You can also pass --bootstrap=~/foo to get a different location -
-
-  perl Makefile.PL --bootstrap=~/foo
-  make test && make install
-
-  echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >> ~/.bashrc
-
-  . ~/.bashrc
+changed settings into your current shell's environment. Bourne shells use C<.
+~/.bashrc> for this, whereas C shells use C<source ~/.cshrc>. Replace .bashrc or
+.cshrc with the name of the file you wrote above with the echo command.
 
 If you're on a slower machine, or are operating under draconian disk space
 limitations, you can disable the automatic generation of manpages from POD when
@@ -481,7 +463,7 @@ installing modules by using the C<--no-manpages> argument when bootstrapping:
 
   perl Makefile.PL --bootstrap --no-manpages
 
-If you want to install multiple Perl module environments, say for application evelopment, 
+If you want to install multiple Perl module environments, say for application development, 
 install local::lib globally and then:
 
   cd ~/mydir1
@@ -584,6 +566,26 @@ PATH is appended to, rather than clobbered.
 =back
 
 These values are then available for reference by any code after import.
+
+=head1 CREATING A SELF-CONTAINED SET OF MODULES
+
+You can use local::lib to prepare a directory which contains a module and all
+of its non-core dependencies.  The C<--self-contained> option ignores any
+globally installed modules when resolving dependencies, only considering
+modules installed in a "local::lib" directory or provided by core Perl.
+
+A use-case for this feature would be to prepare to deploy a whole "stack" of
+module dependencies on a new machine, even if you have copies of the same
+dependencies installed globally already.
+
+The C<--self-contained> option should be used like this: 
+
+  # Install LWP and *all non-core* dependencies to the 'my_lwp' directory 
+  perl -MCPAN -Mlocal::lib=--self-contained,my_lwp -e 'CPAN::install(LWP)'
+
+Note that some dependencies may involve C-based "XS" code even if your target
+module doesn't. The issue of dealing with XS vs Pure Perl code is beyond the scope
+of what local::lib provides. 
 
 =head1 METHODS
 
@@ -785,10 +787,6 @@ auto_install fixes kindly sponsored by http://www.takkle.com/
 
 =head1 CONTRIBUTORS
 
-Chris Nehren <apeiron@cpan.org> now oversees maintenance of local::lib, in
-addition to providing doc patches and bootstrap fixes to prevent users from
-shooting themselves in the foot (it's more likely than you think).
-
 Patches to correctly output commands for csh style shells, as well as some
 documentation additions, contributed by Christopher Nehren <apeiron@cpan.org>.
 
@@ -811,11 +809,8 @@ section. Many thanks!
 
 Patch to add Win32 support contributed by Curtis Jewell <csjewell@cpan.org>.
 
-kgish/#perl-help@irc.perl.org suggested revamping the section on sourcing the
-shell file to make it clearer to those quickly reading the POD.
-
-t0m and chrisa on #local-lib@irc.perl.org pointed out a PERL5LIB ordering issue
-with C<--self-contained>.
+Warnings for missing PATH/PERL5LIB (as when not running interactively) silenced
+by a patch from Marco Emilio Poleggi.
 
 =head1 COPYRIGHT
 

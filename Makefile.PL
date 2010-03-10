@@ -5,6 +5,37 @@ use Cwd;
 use vars qw($bootstrapping $bootstrapping_args $no_manpages);
 use Config;
 
+# Solaris (and possibly other Unices) have a tar in /usr/bin that, among
+# other things, does not understand @LongLink. This can cause 
+# extraction to look like it succeeded, but it actually failed (because
+# the error message for the @LongLink failure scrolled offscreen).
+# Therefore, given the fact that GNU tar is the most widespread tar available,
+# and it actually supports the feature we want (I'd bet it originated in GNU
+# tar, but I digress), we'll look for GNU tar. If we don't find it, and the
+# user hasn't pointed us to a suitable tar, we'll bomb and tell them what to
+# do.
+
+my $have_gtar = 0;
+if($^O eq 'solaris') {
+  $have_gtar = 0;
+  for my $env_path (split /:/, $ENV{PATH}) {
+    $have_gtar = 1 if -x File::Spec->catfile($env_path, 'gtar');
+  }
+} else {
+  $have_gtar = 1;
+}
+if(exists $ENV{PERL_LL_TAR}) {
+  $have_gtar ||= -x $ENV{PERL_LL_TAR};
+}
+
+die <<'DEATH' unless $have_gtar;
+You are using Solaris (or another traditional Unix) that does not provide a sane
+tar, capable of dealing with the output of GNU tar. Please either set the
+PERL_LL_TAR environment variable to the location of a version of tar that
+understands the @LongLink convention or put a binary named gtar somewhere on
+your PATH.
+DEATH
+
 my $cwd;
 BEGIN {
   $cwd = Cwd::cwd();
@@ -47,13 +78,17 @@ DEATH
     push(@ARGV,$ENV{PERL_MM_OPT});
     push(@ARGV, @libs);
 
+    # <mst> GODDAMN makepl_arg INSTALLDIRS=site
+    # <mst> we must set PERL_AUTOINSTALL_PREFER_CPAN too
+    $ENV{PERL_AUTOINSTALL_PREFER_CPAN} = 1;
+
     system($^X, '-MExtUtils::MakeMaker 6.31', '-e1');
     my $eumm = $? >> 8;
 
     system($^X, '-MExtUtils::Install 1.43', '-e1');
     my $eui = $? >> 8;
 
-    system($^X, '-MCPAN 1.80', '-e1');
+    system($^X, '-MCPAN 1.82', '-e1');
     my $cpan = $? >> 8;
     my $cpan_command = '';
 
@@ -67,6 +102,19 @@ DEATH
          }
          return $orig->(@_);
        };
+       # not yet -- apeiron, 2010-03-10 
+       #$CPAN::Config->{urllist} = ["http://cpan.shadowcatprojects.net"];
+       # <mst> all bootstrapped fine on one DH account
+       # <mst> on another, it tries to install man stuff into /usr/local
+       # <mst> cannot for the life of me figure out why
+       # <mst> (same fucking server as well)
+       # <mst> GOT THE BASTARD
+       # <mst> ExtUtils::ParseXS uses Module::Build
+       # <mst> but Module::Build depends on it
+       # <mst> so you need to set prefer_installer MM
+       # <mst> so cpan uses EU::ParseXS Makefile.PL
+       # <mst> since we already got EUMM, *that* works
+       $CPAN::Config->{prefer_installer} = "EUMM";
        CPAN::Config->load;
        unless ($done || -w $CPAN::Config->{keep_source_where}) {
          my $save = $CPAN::Config->{urllist};
@@ -127,7 +175,7 @@ requires 'ExtUtils::Install' => '1.43'; # ditto
 requires 'ExtUtils::CBuilder'; # this and ParseXS are needed for MB C_support
 requires 'ExtUtils::ParseXS';
 requires 'Module::Build' => '0.28'; # lib -> lib/perl5 change
-my $required_CPAN = '1.80';
+my $required_CPAN = '1.82';
 requires 'CPAN' => $required_CPAN; # sudo support + CPAN::HandleConfig
 
 # No, really. See

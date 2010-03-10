@@ -19,7 +19,7 @@ no_index:
     - t
     - xt
 requires:
-  CPAN: 1.80
+  CPAN: 1.82
   ExtUtils::CBuilder: 0
   ExtUtils::Install: 1.43
   ExtUtils::MakeMaker: 6.31
@@ -28,4 +28,4 @@ requires:
   perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.004009
+version: 1.005000
