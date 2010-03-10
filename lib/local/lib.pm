@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.005000'; # 1.5.0
+our $VERSION = '1.005001'; # 1.5.1
 my @KNOWN_FLAGS = (qw/--self-contained/);
 
 sub import {
@@ -49,7 +49,7 @@ DEATH
     }
   }
 
-  if($arg_store{self-contained}) {
+  if($arg_store{'self-contained'}) {
     # The only directories that remain are those that we just defined and those
     # where core modules are stored.  We put PERL5LIB first, so it'll be favored
     # over privlibexp and archlibexp
