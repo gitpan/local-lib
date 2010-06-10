@@ -17,7 +17,6 @@ is($c->resolve_empty_path('foo'), 'foo');
 
 {
 
-no warnings 'once'; # sigh
 local *File::Spec::rel2abs = sub { shift; 'FOO'.shift; };
 is($c->resolve_relative_path('bar'),'FOObar');
 
