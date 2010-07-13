@@ -253,8 +253,6 @@ sub import {
     # import to main::
     no strict 'refs';
     *{'main::WriteMakefile'} = \&Write if caller(0) eq 'main';
-
-    return (@Existing, @Missing);
 }
 
 sub _running_under {
@@ -817,4 +815,4 @@ END_MAKE
 
 __END__
 
-#line 1071
+#line 1069
