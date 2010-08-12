@@ -13,6 +13,7 @@ inc/Module/Install/WriteAll.pm
 lib/lib/core/only.pm
 lib/local/lib.pm
 lib/POD2/DE/local/lib.pod
+lib/POD2/PT_BR/local/lib.pod
 Makefile.PL
 MANIFEST			This list of files
 META.yml

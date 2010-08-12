@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.006005'; # 1.6.5
+our $VERSION = '1.006006'; # 1.6.6
 
 our @KNOWN_FLAGS = qw(--self-contained);
 
@@ -405,6 +405,8 @@ environment variables, as discussed in step 4. Without this, you would still
 install the modules into the system CPAN installation and also your Perl scripts
 will not use the lib/ path you bootstrapped with local::lib.
 
+By default local::lib installs itself and the CPAN modules into ~/perl5.
+
 Windows users must also see L</Differences when using this module under Win32>.
 
 1. Download and unpack the local::lib tarball from CPAN (search for "Download"
@@ -419,8 +421,8 @@ convenient location.
 If the system asks you whether it should automatically configure as much
 as possible, you would typically answer yes.
 
-In order to install local::lib into a directory other than default, you need 
-to give that directory on the call of bootstrap like this: 
+In order to install local::lib into a directory other than the default, you need
+to specify the name of the directory when you call bootstrap, as follows:
 
   perl Makefile.PL --bootstrap=~/foo
 
@@ -506,7 +508,7 @@ Control Panel's System applet yourself or use L<App::local::lib::Win32Helper>.
 
 The "~" is translated to the user's profile directory (the directory named for
 the user under "Documents and Settings" (Windows XP or earlier) or "Users"
-(Windows Vista or later) unless $ENV{HOME} exists. After that, the home
+(Windows Vista or later)) unless $ENV{HOME} exists. After that, the home
 directory is translated to a short name (which means the directory must exist)
 and the subdirectories are created.
 
@@ -568,17 +570,19 @@ These values are then available for reference by any code after import.
 
 =head1 CREATING A SELF-CONTAINED SET OF MODULES
 
-See L<lib::core::only|lib::core::only> for one way to do this - but note that
+See L<lib::core::only> for one way to do this - but note that
 there are a number of caveats, and the best approach is always to perform a
 build against a clean perl (i.e. site and vendor as close to empty as possible).
 
 =head1 METHODS
 
-=head2 ensure_directory_structure_for
+=head2 ensure_dir_structure_for
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: None
 
 =back
 
@@ -589,29 +593,45 @@ an exception on failure.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: None
 
 =back
 
 Prints to standard output the variables listed above, properly set to use the
 given path as the base directory.
 
+=head2 build_environment_vars_for
+
+=over 4
+
+=item Arguments: $path, $interpolate
+
+=item Return value: \%environment_vars
+
+=back
+
 =head2 setup_env_hash_for
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: None
 
 =back
 
 Constructs the C<%ENV> keys for the given path, by calling
-C<build_environment_vars_for>.
+L</build_environment_vars_for>.
 
 =head2 install_base_perl_path
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $install_base_perl_path
 
 =back
 
@@ -623,7 +643,9 @@ path.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $install_base_arch_path
 
 =back
 
@@ -636,7 +658,9 @@ C<$Config{archname}>.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $install_base_bin_path
 
 =back
 
@@ -648,7 +672,9 @@ return value, and appends the directory C<bin>.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $modulebuildrc_path
 
 =back
 
@@ -659,7 +685,9 @@ the given path.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $base_path
 
 =back
 
@@ -670,7 +698,9 @@ installation. Defaults to C<~/perl5>.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $home_path
 
 =back
 
@@ -681,7 +711,9 @@ for this purpose. If no definite answer is available, throws an exception.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $absolute_path
 
 =back
 
@@ -691,7 +723,9 @@ Translates the given path into an absolute path.
 
 =over 4
 
-=item Arguments: path
+=item Arguments: $path
+
+=item Return value: $absolute_path
 
 =back
 
@@ -715,6 +749,12 @@ module while installing the new version in a local place. Only combine "make
 install UNINST=1" and local::lib if you understand these possible consequences.
 
 =head1 LIMITATIONS
+
+The perl toolchain is unable to handle directory names with spaces in it,
+so you cant put your local::lib bootstrap into a directory with spaces. What
+you can do is moving your local::lib to a directory with spaces B<after> you
+installed all modules inside your local::lib bootstrap. But be aware that you
+cant update or install CPAN modules after the move.
 
 Rather basic shell detection. Right now anything with csh in its name is
 assumed to be a C shell or something compatible, and everything else is assumed
@@ -782,7 +822,7 @@ Patches to correctly output commands for csh style shells, as well as some
 documentation additions, contributed by Christopher Nehren <apeiron@cpan.org>.
 
 Doc patches for a custom local::lib directory, more cleanups in the english
-documentation and a german documentation contributed by Torsten Raudssus
+documentation and a L<german documentation|POD2::DE::local::lib> contributed by Torsten Raudssus
 <torsten@raudssus.de>.
 
 Hans Dieter Pearcey <hdp@cpan.org> sent in some additional tests for ensuring
@@ -804,6 +844,9 @@ Mark Stosberg <mark@summersault.com> provided the code for the now deleted
 
 Documentation patches to make win32 usage clearer by
 David Mertens <dcmertens.perl@gmail.com> (run4flat).
+
+Brazilian L<portuguese translation|POD2::PT_BR::local::lib> and minor doc patches contributed by Breno
+G. de Oliveira <garu@cpan.org>.
 
 =head1 COPYRIGHT
 
