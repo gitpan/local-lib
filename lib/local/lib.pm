@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.006006'; # 1.6.6
+our $VERSION = '1.006007'; # 1.6.7
 
 our @KNOWN_FLAGS = qw(--self-contained);
 
@@ -611,6 +611,9 @@ given path as the base directory.
 =item Return value: \%environment_vars
 
 =back
+
+Returns a hash with the variables listed above, properly set to use the
+given path as the base directory.
 
 =head2 setup_env_hash_for
 
