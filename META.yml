@@ -24,8 +24,8 @@ requires:
   ExtUtils::Install: 1.43
   ExtUtils::MakeMaker: 6.31
   ExtUtils::ParseXS: 0
-  Module::Build: 0.28
+  Module::Build: 0.36
   perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
-version: 1.006009
+version: 1.007000
