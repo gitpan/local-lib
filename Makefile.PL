@@ -92,7 +92,8 @@ DEATH
     my $cpan = $? >> 8;
     my $cpan_command = '';
 
-    system($^X, '-MCPAN', '-e',
+    my $did_cpan_config = 0;
+    my $cpan_config_command =
       'my $done; require ExtUtils::MakeMaker;
        my $orig = ExtUtils::MakeMaker->can("prompt");
        *ExtUtils::MakeMaker::prompt = sub ($;$) {
@@ -121,8 +122,7 @@ DEATH
          delete @{$CPAN::Config}{keys %$CPAN::Config};
          $CPAN::Config->{urllist} = $save;
          CPAN::Config->init;
-       }'
-    );
+       }';
 
     $ENV{PERL_MM_USE_DEFAULT} = 1;
 
@@ -138,6 +138,8 @@ DEATH
       $cpan_command .= 'force("install","CPAN"); ';
     }
     if(length $cpan_command) {
+      system($^X, '-MCPAN', '-e', $cpan_config_command);
+      $did_cpan_config++;
       system($^X, '-MCPAN', '-e', $cpan_command);
     }
     if ($cpan) {
@@ -147,6 +149,8 @@ DEATH
       # if we call this code directly, the changes get written to
       # $BOOTSTRAP/lib/perl5/CPAN/Config.pm, not where the user expects them to
       # be in their ~/.cpan/CPAN/MyConfig.pm.
+      system($^X, '-MCPAN', '-e', $cpan_config_command)
+        unless $did_cpan_config;
       system($^X, '-MCPAN',
         '-e', 
         q[CPAN::HandleConfig->load;],
@@ -172,8 +176,6 @@ all_from 'lib/local/lib.pm';
 
 requires 'ExtUtils::MakeMaker' => '6.31'; # version INSTALL_BASE was added
 requires 'ExtUtils::Install' => '1.43'; # ditto
-requires 'ExtUtils::CBuilder'; # this and ParseXS are needed for MB C_support
-requires 'ExtUtils::ParseXS';
 requires 'Module::Build' => '0.36'; # PERL_MB_OPT
 my $required_CPAN = '1.82';
 requires 'CPAN' => $required_CPAN; # sudo support + CPAN::HandleConfig
@@ -200,25 +202,27 @@ delete $ENV{PERL5_CPAN_IS_RUNNING} if $no_cpan_env;
     # It will already be installed by the time we reach here if bootstrapping,
     # otherwise, if we're running from CPAN then it will be installed soon
     # enough, and we'll come back here..
-    if (!$@) {
-        CPAN::HandleConfig->load;
-        for my $eumm_setting ( qw/makepl_arg make_install_arg/ ) {
-            if ($CPAN::Config->{$eumm_setting} =~ /(?:PREFIX|INSTALL_BASE)/) {
-                die <<"DEATH";
+    if (!$@ ) {
+        CPAN::HandleConfig->require_myconfig_or_config;
+        if ( $CPAN::Config ) {
+            for my $eumm_setting ( qw/makepl_arg make_install_arg/ ) {
+                if ($CPAN::Config->{$eumm_setting} =~ /(?:PREFIX|INSTALL_BASE)/) {
+                    die <<"DEATH";
 WHOA THERE! It looks like you've got $CPAN::Config->{$eumm_setting} set. This is
 known to cause problems with local::lib. Please either remove this setting or
 clear out your .cpan directory.
 DEATH
+                }
             }
-        }
 
-        for my $mb_setting (qw/mbuild_arg mbuild_install_arg mbuildpl_arg/) {
-            if ($CPAN::Config->{$mb_setting} =~ /(?:--prefix|--install_base)/) {
-                die <<"DEATH";
+            for my $mb_setting (qw/mbuild_arg mbuild_install_arg mbuildpl_arg/) {
+                if ($CPAN::Config->{$mb_setting} =~ /(?:--prefix|--install_base)/) {
+                    die <<"DEATH";
 WHOA THERE! It looks like you've got $CPAN::Config->{$mb_setting} set. This is
 known to cause problems with local::lib. Please either remove this setting or
 clear out your .cpan directory.
 DEATH
+                }
             }
         }
     }

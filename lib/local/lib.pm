@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.007000'; # 1.7.0
+our $VERSION = '1.008000'; # 1.7.0
 
 our @KNOWN_FLAGS = qw(--self-contained);
 
@@ -267,6 +267,11 @@ sub guess_shelltype {
 
 sub print_environment_vars_for {
   my ($class, $path) = @_;
+  print $class->environment_vars_string_for($path);
+}
+
+sub environment_vars_string_for {
+  my ($class, $path) = @_;
   my @envs = $class->build_environment_vars_for($path, LITERAL_ENV);
   my $out = '';
 
@@ -283,7 +288,7 @@ sub print_environment_vars_for {
     $value =~ s/(\\")/\\$1/g;
     $out .= $class->${\"build_${shelltype}_env_declaration"}($name, $value);
   }
-  print $out;
+  return $out;
 }
 
 # simple routines that take two arguments: an %ENV key and a value. return
@@ -316,6 +321,7 @@ sub setup_env_hash_for {
 sub build_environment_vars_for {
   my ($class, $path, $interpolate) = @_;
   return (
+    PERL_LOCAL_LIB_ROOT => $path,
     PERL_MB_OPT => "--install_base ${path}",
     PERL_MM_OPT => "INSTALL_BASE=${path}",
     PERL5LIB => join($Config{path_sep},
