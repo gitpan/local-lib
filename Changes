@@ -1,4 +1,7 @@
 Revision history for local::lib
+1.008001
+
+        - Bootstrap Module::Build just like ExtUtils::MakeMaker
 
 1.008000
         - Remove redundant prereqs now that Module::Build 0.36 is required
