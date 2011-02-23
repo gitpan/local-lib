@@ -25,5 +25,8 @@ requires:
   Module::Build: 0.36
   perl: 5.8.1
 resources:
+  bugtracker: http://rt.cpan.org/Public/Dist/Display.html?Name=local-lib
+  homepage: http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git
   license: http://dev.perl.org/licenses/
-version: 1.008001
+  repository: git://git.shadowcat.co.uk/p5sagit/local-lib.git
+version: 1.008002
