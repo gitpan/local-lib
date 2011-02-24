@@ -11,7 +11,7 @@ use File::Path ();
 use Carp ();
 use Config;
 
-our $VERSION = '1.008003'; # 1.8.3
+our $VERSION = '1.008004'; # 1.8.4
 
 our @KNOWN_FLAGS = qw(--self-contained --deactivate --deactivate-all);
 
@@ -207,6 +207,8 @@ sub setup_local_lib_for {
   my $interpolate = LITERAL_ENV;
   my @active_lls = $class->active_paths;
 
+  $path = $class->ensure_dir_structure_for($path);
+
   if (! $deactivating) {
     if (@active_lls && $active_lls[-1] eq $path) {
       exit 0 if $0 eq '-';
@@ -220,8 +222,6 @@ sub setup_local_lib_for {
       $interpolate = INTERPOLATE_ENV;
     }
   }
-
-  $path = $class->ensure_dir_structure_for($path);
 
   if ($0 eq '-') {
     $class->print_environment_vars_for($path, $deactivating, $interpolate);
