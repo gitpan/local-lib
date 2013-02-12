@@ -3,11 +3,12 @@ abstract: 'create and use a local lib/ for perl modules with PERL5LIB'
 author:
   - 'Matt S Trout <mst@shadowcat.co.uk> http://www.shadowcat.co.uk/'
 build_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.59
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
+  ExtUtils::MakeMaker: 6.59
 distribution_type: module
-generated_by: 'Module::Install version 1.00'
+dynamic_config: 1
+generated_by: 'Module::Install version 1.06'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -17,7 +18,6 @@ no_index:
   directory:
     - inc
     - t
-    - xt
 requires:
   CPAN: 1.82
   ExtUtils::Install: 1.43
@@ -29,4 +29,4 @@ resources:
   homepage: http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git
   license: http://dev.perl.org/licenses/
   repository: git://git.shadowcat.co.uk/p5sagit/local-lib.git
-version: 1.008004
+version: 1.008005
