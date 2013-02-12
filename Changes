@@ -1,4 +1,8 @@
 Revision history for local::lib
+1.008006 2013-02-12
+
+        - Remove prototype on private function 
+
 1.008005 2013-02-11
 
         - Avoid issue where PERL5LIB Carp is older than local::lib one
