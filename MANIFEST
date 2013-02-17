@@ -28,4 +28,3 @@ t/install.t
 t/lib-core-only.t
 t/pipeline.t
 t/stackable.t
-t/subroutine-in-inc.t
