@@ -10,7 +10,7 @@ use File::Spec ();
 use File::Path ();
 use Config;
 
-our $VERSION = '1.008011'; # 1.8.11
+our $VERSION = '1.008012'; # 1.8.12
 
 our @KNOWN_FLAGS = qw(--self-contained --deactivate --deactivate-all);
 
@@ -29,7 +29,8 @@ sub import {
   my %arg_store;
   for my $arg (@args) {
     # check for lethal dash first to stop processing before causing problems
-    if ($arg =~ /−/) {
+    # the fancy dash is U+2212 or \xE2\x88\x92
+    if ($arg =~ /\xE2\x88\x92/ or $arg =~ /−/) {
       die <<'DEATH';
 WHOA THERE! It looks like you've got some fancy dashes in your commandline!
 These are *not* the traditional -- dashes that software recognizes. You
@@ -99,7 +100,7 @@ sub pipeline {
 package local::lib;
 
 { package Foo; sub foo { -$_[1] } sub bar { $_[1]+2 } sub baz { $_[1]+3 } }
-my $foo = bless({}, 'Foo');                                                 
+my $foo = bless({}, 'Foo');
 Test::More::ok($foo->${pipeline qw(foo bar baz)}(10) == -15);
 
 =end testing
@@ -442,7 +443,14 @@ sub active_paths {
   my ($class) = @_;
 
   return () unless defined $ENV{PERL_LOCAL_LIB_ROOT};
-  return grep { $_ ne '' } split /\Q$Config{path_sep}/, $ENV{PERL_LOCAL_LIB_ROOT};
+
+  return grep {
+    # screen out entries that aren't actually reflected in @INC
+    my $active_ll = $class->install_base_perl_path($_);
+    grep { $_ eq $active_ll } @INC
+  }
+  grep { $_ ne '' }
+  split /\Q$Config{path_sep}\E/, $ENV{PERL_LOCAL_LIB_ROOT};
 }
 
 sub build_deactivate_environment_vars_for {
@@ -583,9 +591,9 @@ From the shell -
 A typical way to install local::lib is using what is known as the
 "bootstrapping" technique.  You would do this if your system administrator
 hasn't already installed local::lib.  In this case, you'll need to install
-local::lib in your home directory. 
+local::lib in your home directory.
 
-If you do have administrative privileges, you will still want to set up your 
+Even if you do have administrative privileges, you will still want to set up your
 environment variables, as discussed in step 4. Without this, you would still
 install the modules into the system CPAN installation and also your Perl scripts
 will not use the lib/ path you bootstrapped with local::lib.
@@ -615,7 +623,7 @@ to specify the name of the directory when you call bootstrap, as follows:
 
   make test && make install
 
-4. Now we need to setup the appropriate environment variables, so that Perl 
+4. Now we need to setup the appropriate environment variables, so that Perl
 starts using our newly generated lib/ directory. If you are using bash or
 any other Bourne shells, you can add this to your shell startup script this
 way:
@@ -629,13 +637,13 @@ If you are using C shell, you can do this as follows:
   /bin/csh
   perl -I$HOME/perl5/lib/perl5 -Mlocal::lib >> ~/.cshrc
 
-If you passed to bootstrap a directory other than default, you also need to give that as 
+If you passed to bootstrap a directory other than default, you also need to give that as
 import parameter to the call of the local::lib module like this way:
 
   echo 'eval $(perl -I$HOME/foo/lib/perl5 -Mlocal::lib=$HOME/foo)' >>~/.bashrc
 
 After writing your shell configuration file, be sure to re-read it to get the
-changed settings into your current shell's environment. Bourne shells use 
+changed settings into your current shell's environment. Bourne shells use
 C<. ~/.bashrc> for this, whereas C shells use C<source ~/.cshrc>.
 
 If you're on a slower machine, or are operating under draconian disk space
@@ -644,9 +652,9 @@ installing modules by using the C<--no-manpages> argument when bootstrapping:
 
   perl Makefile.PL --bootstrap --no-manpages
 
-To avoid doing several bootstrap for several Perl module environments on the 
-same account, for example if you use it for several different deployed 
-applications independently, you can use one bootstrapped local::lib 
+To avoid doing several bootstrap for several Perl module environments on the
+same account, for example if you use it for several different deployed
+applications independently, you can use one bootstrapped local::lib
 installation to install modules in different directories directly this way:
 
   cd ~/mydir1
@@ -699,7 +707,7 @@ C<CMD.exe>, you can use this:
   set PERL_MM_OPT=INSTALL_BASE=C:\DOCUME~1\ADMINI~1\perl5
   set PERL5LIB=C:\DOCUME~1\ADMINI~1\perl5\lib\perl5;C:\DOCUME~1\ADMINI~1\perl5\lib\perl5\MSWin32-x86-multi-thread
   set PATH=C:\DOCUME~1\ADMINI~1\perl5\bin;%PATH%
-  
+
   ### To set the environment for this shell alone
   C:\>perl -Mlocal::lib > %TEMP%\tmp.bat && %TEMP%\tmp.bat && del %TEMP%\tmp.bat
   ### instead of $(perl -Mlocal::lib=./)
@@ -733,7 +741,7 @@ packages takes precedence over the system installation.
 If you are using a package management system (such as Debian), you don't need to
 worry about Debian and CPAN stepping on each other's toes.  Your local version
 of the packages will be written to an entirely separate directory from those
-installed by Debian.  
+installed by Debian.
 
 =head1 DESCRIPTION
 
@@ -856,7 +864,8 @@ L</build_environment_vars_for>.
 =back
 
 Returns a list of active C<local::lib> paths, according to the
-C<PERL_LOCAL_LIB_ROOT> environment variable.
+C<PERL_LOCAL_LIB_ROOT> environment variable and verified against
+what is really in C<@INC>.
 
 =head2 install_base_perl_path
 
@@ -970,28 +979,36 @@ install UNINST=1" and local::lib if you understand these possible consequences.
 
 =head1 LIMITATIONS
 
-The perl toolchain is unable to handle directory names with spaces in it,
-so you cant put your local::lib bootstrap into a directory with spaces. What
+=over 4
+
+=item * The perl toolchain is unable to handle directory names with spaces in it,
+so you can't put your local::lib bootstrap into a directory with spaces. What
 you can do is moving your local::lib to a directory with spaces B<after> you
 installed all modules inside your local::lib bootstrap. But be aware that you
-cant update or install CPAN modules after the move.
+can't update or install CPAN modules after the move.
 
-Rather basic shell detection. Right now anything with csh in its name is
+=item * Rather basic shell detection. Right now anything with csh in its name is
 assumed to be a C shell or something compatible, and everything else is assumed
 to be Bourne, except on Win32 systems. If the C<SHELL> environment variable is
 not set, a Bourne-compatible shell is assumed.
 
-Bootstrap is a hack and will use CPAN.pm for ExtUtils::MakeMaker even if you
+=item * Bootstrap is a hack and will use CPAN.pm for ExtUtils::MakeMaker even if you
 have CPANPLUS installed.
 
-Kills any existing PERL5LIB, PERL_MM_OPT or PERL_MB_OPT.
+=item * Kills any existing PERL5LIB, PERL_MM_OPT or PERL_MB_OPT.
 
-Should probably auto-fixup CPAN config if not already done.
+=item * Should probably auto-fixup CPAN config if not already done.
+
+=back
 
 Patches very much welcome for any of the above.
 
-On Win32 systems, does not have a way to write the created environment variables
+=over 4
+
+=item * On Win32 systems, does not have a way to write the created environment variables
 to the registry, so that they can persist through a reboot.
+
+=back
 
 =head1 TROUBLESHOOTING
 
