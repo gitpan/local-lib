@@ -30,4 +30,4 @@ resources:
   homepage: http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git
   license: http://dev.perl.org/licenses/
   repository: git://git.shadowcat.co.uk/p5sagit/local-lib.git
-version: 1.008013
+version: 1.008014
