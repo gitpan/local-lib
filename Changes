@@ -1,5 +1,9 @@
 Revision history for local::lib
 
+1.008017   2013-09-14
+        - avoid "Unrecognized escape \s passed through" errors on win32
+          (again)
+
 1.008016   2013-09-13
         - avoid "Unrecognized escape \s passed through" errors on win32
 
