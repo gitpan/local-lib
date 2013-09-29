@@ -35,6 +35,7 @@ t/pipeline.t
 t/stackable.t
 t/subroutine-in-inc.t
 t/taint-mode.t
+todo/failures
 xt/release/cpan-changes.t
 xt/release/distmeta.t
 xt/release/eol.t
