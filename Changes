@@ -1,5 +1,9 @@
 Revision history for local::lib
 
+1.008020   2013-10-03 (development release, unindexed)
+        - yet another attempt to overcome win32 testing issues (paths with
+          spaces, backslashes)
+
 1.008019   2013-09-29 (development release, unindexed)
         - another attempt to overcome win32 testing issues (paths with spaces,
           backslashes)
