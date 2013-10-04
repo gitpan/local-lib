@@ -1,3 +1,10 @@
+
+
+# haarg rewrote the taint test:
+# http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git;a=blob;f=t/taint-mode.t;h=66137c2bfc4b318663e8812c31e5d8cee5139f98;hb=9578343645072e803040e127f37a3ade348e26f3
+
+
+
 t/install.1:
 
 # http://www.cpantesters.org/cpan/report/c8a7c865-6d66-1014-b964-310d2901c822

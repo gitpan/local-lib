@@ -10,7 +10,7 @@ use File::Spec ();
 use File::Path ();
 use Config;
 
-our $VERSION = '1.008_020'; # 1.8.20 development release
+our $VERSION = '1.008_021'; # 1.8.21 development release
 $VERSION = eval $VERSION;
 
 our @KNOWN_FLAGS = qw(--self-contained --deactivate --deactivate-all);
@@ -1106,8 +1106,8 @@ listed above.
 
 =head1 LICENSE
 
-This library is free software and may be distributed under the same terms
-as perl itself.
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
 
