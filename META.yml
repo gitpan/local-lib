@@ -22,7 +22,7 @@ no_index:
 requires:
   CPAN: 1.82
   ExtUtils::Install: 1.43
-  ExtUtils::MakeMaker: 6.31
+  ExtUtils::MakeMaker: 6.74
   Module::Build: 0.36
   perl: 5.8.1
 resources:
@@ -30,4 +30,4 @@ resources:
   homepage: http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git
   license: http://dev.perl.org/licenses/
   repository: git://git.shadowcat.co.uk/p5sagit/local-lib.git
-version: 1.008023
+version: 1.008_024
