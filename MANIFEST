@@ -25,10 +25,6 @@ t/bad_variables.t
 t/classmethod.t
 t/coderefs_in_inc.t
 t/de-dup.t
-t/dist/EUMM/lib/EUMM.pm
-t/dist/EUMM/Makefile.PL
-t/dist/MB/Build.PL
-t/dist/MB/lib/MB.pm
 t/install.t
 t/lib-core-only.t
 t/lib/TempDir.pm

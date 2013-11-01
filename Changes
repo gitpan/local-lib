@@ -1,5 +1,16 @@
 Revision history for local::lib
 
+1.008025   2013-11-01  (development release, unindexed)
+        - fix install test on cygwin
+        - fix stackable test on win32 and when external local::lib is set
+        - clarify errors in Makefile.PL about CPAN configuration
+        - adjust csh output to allow use directly by eval
+        - silence a possible warning in Makefile.PL
+        - add additional docs about combining local::lib with lib::core::only
+        - reverse order of PERL_LOCAL_LIB_ROOT.  new local::libs are now added
+          to the beginning instead of the end, to match the order of other
+          similar environment variables.
+
 1.008024   2013-10-28  (development release, unindexed)
         - fix installation into directories with spaces or backslashes, as
           well as Win32 test failures when Capture::Tiny is installed
@@ -63,8 +74,13 @@ Revision history for local::lib
 1.008008   2013-02-24
         - Fix putting arch path in PERL5LIB
         - Refactor Win32 path handling out of ensure_dir_structure_for()
-        - Fix activate_paths when PERL_LOCAL_LIB_ROOT starts with :
+        - Fix active_paths when PERL_LOCAL_LIB_ROOT starts with :
         - Fix ~/perl5/bin missing in $PATH
+        - The environment variables definition for the shell is now output in
+          a way that allows to put the generated content directly in the
+          .profile without requiring to launch perl
+          (the only difference is how PERL_LOCAL_LIB_ROOT is generated)
+          (Olivier Mengué).
 
 1.008007   2013-02-17
         - Back to 1.008004 with Carp fix since subsequent releases were botched

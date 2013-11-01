@@ -10,7 +10,7 @@ use File::Spec ();
 use File::Path ();
 use Config;
 
-our $VERSION = '1.008_024'; # 1.8.24
+our $VERSION = '1.008_025'; # 1.8.25
 $VERSION = eval $VERSION;
 
 our @KNOWN_FLAGS = qw(--self-contained --deactivate --deactivate-all);
@@ -218,7 +218,7 @@ sub setup_local_lib_for {
   $path = Win32::GetShortPathName($path) if $^O eq 'MSWin32';
 
   if (! $deactivating) {
-    if (@active_lls && $active_lls[-1] eq $path) {
+    if (@active_lls && $active_lls[0] eq $path) {
       exit 0 if $0 eq '-';
       return; # Asked to add what's already at the top of the stack
     } elsif (grep { $_ eq $path} @active_lls) {
@@ -345,7 +345,7 @@ sub build_bourne_env_declaration {
 sub build_csh_env_declaration {
   my $class = shift;
   my($name, $value) = @_;
-  return defined($value) ? qq{setenv ${name} "${value}"\n} : qq{unsetenv ${name}\n};
+  return defined($value) ? qq{setenv ${name} "${value}";\n} : qq{unsetenv ${name};\n};
 }
 
 sub build_win32_env_declaration {
@@ -421,8 +421,8 @@ sub build_activate_environment_vars_for {
     PERL_LOCAL_LIB_ROOT =>
             _env_list_value(
               { interpolate => $interpolate, exists => 0, empty => '' },
-              \'PERL_LOCAL_LIB_ROOT',
               $path,
+              \'PERL_LOCAL_LIB_ROOT',
             ),
     PERL_MB_OPT => "--install_base " . _mb_escape_path($path),
     PERL_MM_OPT => "INSTALL_BASE=" . _mm_escape_path($path),
@@ -511,8 +511,8 @@ sub build_deactivate_environment_vars_for {
 
   # If removing ourselves from the "top of the stack", set install paths to
   # correspond with the new top of stack.
-  if ($active_lls[-1] eq $path) {
-    my $new_top = $active_lls[-2];
+  if ($active_lls[0] eq $path) {
+    my $new_top = $active_lls[1];
     $env{PERL_MB_OPT} = defined($new_top) ? "--install_base "._mb_escape_path($new_top) : undef;
     $env{PERL_MM_OPT} = defined($new_top) ? "INSTALL_BASE="._mm_escape_path($new_top) : undef;
   }
