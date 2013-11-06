@@ -3,14 +3,13 @@ use warnings;
 
 package local::lib;
 
-use 5.008001; # probably works with earlier versions but I'm not supporting them
-              # (patches would, of course, be welcome)
+use 5.006;
 
 use File::Spec ();
 use File::Path ();
 use Config;
 
-our $VERSION = '1.008_025'; # 1.8.25
+our $VERSION = '1.008026'; # 1.8.26
 $VERSION = eval $VERSION;
 
 our @KNOWN_FLAGS = qw(--self-contained --deactivate --deactivate-all);
