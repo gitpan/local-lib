@@ -26,4 +26,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=local-lib
   license: http://dev.perl.org/licenses/
   repository: git://git.shadowcat.co.uk/p5sagit/local-lib.git
-version: 2.000_000
+version: 2.000_001

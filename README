@@ -481,6 +481,18 @@ LIMITATIONS
         is using "use lib "$ENV{HOME}/perl5/lib/perl5";" inside the script
         instead of using "local::lib" directly.
 
+    *   Conflicts with ExtUtils::MakeMaker's "PREFIX" option. "local::lib"
+        uses the "INSTALL_BASE" option, as it has more predictable and sane
+        behavior. If something attempts to use the "PREFIX" option when
+        running a Makefile.PL, ExtUtils::MakeMaker will refuse to run, as
+        the two options conflict. This can be worked around by temporarily
+        unsetting the "PERL_MM_OPT" environment variable.
+
+    *   Conflicts with Module::Build's "--prefix" option. Similar to the
+        previous limitation, but any "--prefix" option specified will be
+        ignored. This can be worked around by temporarily unsetting the
+        "PERL_MB_OPT" environment variable.
+
     Patches very much welcome for any of the above.
 
     *   On Win32 systems, does not have a way to write the created
