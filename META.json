@@ -1,0 +1,51 @@
+{
+   "abstract" : "create and use a local lib/ for perl modules with PERL5LIB",
+   "author" : [
+      "mst - Matt S. Trout (cpan:MSTROUT) <mst@shadowcat.co.uk>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "ExtUtils::MakeMaker version 6.82, CPAN::Meta::Converter version 2.132830",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "local-lib",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "inc",
+         "xt"
+      ]
+   },
+   "prereqs" : {
+      "runtime" : {
+         "requires" : {
+            "CPAN" : "1.82",
+            "ExtUtils::Install" : "1.43",
+            "ExtUtils::MakeMaker" : "6.74",
+            "Module::Build" : "0.36",
+            "perl" : "v5.8.1"
+         }
+      }
+   },
+   "release_status" : "testing",
+   "resources" : {
+      "bugtracker" : {
+         "mailto" : "bug-local-lib@rt.cpan.org",
+         "web" : "https://rt.cpan.org/Public/Dist/Display.html?Name=local-lib"
+      },
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "type" : "git",
+         "url" : "git://git.shadowcat.co.uk/p5sagit/local-lib.git",
+         "web" : "http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git"
+      },
+      "x_IRC" : "irc://irc.perl.org/#local-lib"
+   },
+   "version" : "2.000_000"
+}

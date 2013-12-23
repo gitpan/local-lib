@@ -176,20 +176,58 @@ DEATH
   }
 }
 
-use inc::Module::Install;
+require ExtUtils::MakeMaker;
+ExtUtils::MakeMaker->import;
+(do 'maint/Makefile.PL.include' or die $@) unless -f 'META.yml';
 
-name 'local-lib';
-all_from 'lib/local/lib.pm';
+my %CONFIGURE_DEPS = ();
+my %BUILD_DEPS = ();
+my %TEST_DEPS = (
+  'Test::More'  => 0,
+);
+my %RUN_DEPS = (
+  'ExtUtils::MakeMaker' => '6.74', # version PERL_MM_OPT is shell parsed
+  'ExtUtils::Install'   => '1.43', # version INSTALL_BASE was added
+  'Module::Build'       => '0.36', # PERL_MB_OPT
+  'CPAN'                => '1.82', # sudo support + CPAN::HandleConfig
+);
 
-requires 'ExtUtils::MakeMaker' => '6.74'; # version PERL_MM_OPT is shell parsed
-requires 'ExtUtils::Install' => '1.43'; # version INSTALL_BASE was added
-requires 'Module::Build' => '0.36'; # PERL_MB_OPT
+my %extra_info = (
+  'meta-spec' => { version => 2 },
+  resources => {
+    repository => {
+      # r/w: p5sagit@git.shadowcat.co.uk:local-lib.git
+      url => 'git://git.shadowcat.co.uk/p5sagit/local-lib.git',
+      web => 'http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git',
+      type => 'git',
+    },
+    x_IRC => 'irc://irc.perl.org/#local-lib',
+    bugtracker => {
+      web => 'https://rt.cpan.org/Public/Dist/Display.html?Name=local-lib',
+      mailto => 'bug-local-lib@rt.cpan.org',
+    },
+    license => [ 'http://dev.perl.org/licenses/' ],
+  },
+  prereqs => {
+    runtime   => { requires => { perl => '5.8.1' } },
+  },
+);
+
+if ($bootstrapping) {
+  no warnings 'once';
+*MY::postamble = sub {
+  <<"END";
+PERL     += $bootstrapping_args
+FULLPERL += $bootstrapping_args
+END
+  }
+}
 
 # don't bother fixing CPAN.pm if bootstrapped from cpanminus
-unless ($ENV{PERL5_CPANM_IS_RUNNING}) {
-    my $required_CPAN = '1.82';
-    requires 'CPAN' => $required_CPAN; # sudo support + CPAN::HandleConfig
-
+if ($ENV{PERL5_CPANM_IS_RUNNING}) {
+    delete $RUN_DEPS{CPAN};
+}
+else {
     # No, really. See
     # https://rt.cpan.org/Public/Bug/Display.html?id=23735
     # for why CPAN now sets the CPANPLUS env var.
@@ -237,30 +275,48 @@ DEATH
         require CPAN;
         # Explode if it looks like requiring CPAN::HandleConfig should
         # have worked, but didn't.
-        die($error) if $CPAN::VERSION >= $required_CPAN;
+        die($error) if $CPAN::VERSION >= $RUN_DEPS{CPAN};
     }
 }
-
-if ($bootstrapping) {
-  auto_install_now;
-  postamble <<"END";
-PERL     += $bootstrapping_args
-FULLPERL += $bootstrapping_args
-END
-} else {
-  auto_install;
-}
 chdir($cwd);
-resources(
-  # r/w: p5sagit@git.shadowcat.co.uk:local-lib.git
-  repository => 'git://git.shadowcat.co.uk/p5sagit/local-lib.git',
-  homepage => 'http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git',
-  bugtracker => 'http://rt.cpan.org/Public/Dist/Display.html?Name=local-lib',
-);
 
-makemaker_args(
-    clean => { FILES => 't/dist/*/MYMETA* t/dist/*/blib t/dist/EUMM/Makefile t/dist/EUMM/pm_to_blib t/dist/MB/Build t/dist/MB/_build' },
-    realclean => { FILES => 'MANIFEST MANIFEST.SKIP.bak' },
-);
+@{$extra_info{prereqs}{runtime}{requires}}{keys %RUN_DEPS} = values %RUN_DEPS;
 
-WriteAll;
+# have to do this since old EUMM dev releases miss the eval $VERSION line
+my $eumm_version = eval $ExtUtils::MakeMaker::VERSION;
+my $mymeta_works = $eumm_version >= 6.57_07;
+my $mymeta = $eumm_version >= 6.57_02;
+
+my $has_test_requires = $eumm_version >= 6.63_03;
+
+my $has_meta_v2 = $eumm_version >= 6.57_10;
+if (! $has_meta_v2) {
+  %extra_info = ();
+}
+if (not $has_test_requires) {
+  %BUILD_DEPS = (%BUILD_DEPS, %TEST_DEPS);
+  %TEST_DEPS = ();
+}
+if (not $mymeta_works) {
+  %RUN_DEPS = (%RUN_DEPS, %BUILD_DEPS);
+  %BUILD_DEPS = ();
+}
+
+WriteMakefile(
+  NAME => 'local::lib',
+  VERSION_FROM => 'lib/local/lib.pm',
+  CONFIGURE_REQUIRES => \%CONFIGURE_DEPS,
+  PREREQ_PM => {
+    %RUN_DEPS,
+  },
+  keys %BUILD_DEPS ? ( BUILD_REQUIRES => \%BUILD_DEPS ) : (),
+  keys %TEST_DEPS ? ( TEST_REQUIRES => \%TEST_DEPS ) : (),
+  META_ADD => \%extra_info,
+  META_MERGE => {
+    no_index => {
+      directory => [ 'xt' ]
+    },
+  },
+  ($mymeta && !$mymeta_works ? (NO_MYMETA => 1) : ()),
+  LICENSE => 'perl',
+);
