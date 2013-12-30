@@ -31,7 +31,7 @@
          }
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "mailto" : "bug-local-lib@rt.cpan.org",
@@ -47,5 +47,5 @@
       },
       "x_IRC" : "irc://irc.perl.org/#local-lib"
    },
-   "version" : "2.000_002"
+   "version" : "2.000003"
 }
