@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use File::Spec;
+use File::Basename qw(dirname);
 use File::Temp ();
 use Config;
 use local::lib ();
@@ -21,15 +22,7 @@ sub which {
   return;
 }
 
-my @extra_lib = do {
-  my @paths = `$^X -le"print for \@INC"`;
-  chomp @paths;
-  my %paths;
-  @paths{@paths} = ();
-  grep { !exists $paths{$_} } @INC;
-};
-
-my $extra_lib = join ' ', map { qq{"-I$_"} } @extra_lib;
+my $extra_lib = '-I"' . dirname(dirname($INC{'local/lib.pm'})) . '"';
 
 my @shells;
 for my $shell (
@@ -42,30 +35,41 @@ for my $shell (
   },
   {
     name => 'cmd',
-    opt => '/D /C',
+    opt => '/Q /D /C',
     ext => 'bat',
     perl => qq{@"$^X"},
+    skip => $^O eq 'cygwin',
   },
   {
     name => 'powershell',
-    opt => '-NoProfile -ExecutionPolicy Unrestricted',
+    opt => '-NoProfile -ExecutionPolicy Unrestricted -File',
     ext => 'ps1',
     perl => qq{& '$^X'},
+    skip => $^O eq 'cygwin',
   },
 ) {
   my $name = $shell->{name};
-  next
-    if @ARGV && !grep {$_ eq $name} @ARGV;
-  $shell->{shell} = which($name) || next;
+  $shell->{shell} = which($name);
   $shell->{ext}   ||= $name;
   $shell->{perl}  ||= qq{"$^X"};
+  if (@ARGV) {
+    next
+      if !grep {$_ eq $name} @ARGV;
+    if (!$shell->{shell}) {
+      warn "unable to find executable for $name";
+      next;
+    }
+  }
+  elsif ($shell->{skip} || !$shell->{shell}) {
+    next;
+  }
   push @shells, $shell;
 }
 
 if (!@shells) {
   plan skip_all => 'no supported shells found';
 }
-plan tests => 4*@shells;
+plan tests => 6*@shells;
 
 my $sep = $Config{path_sep};
 
@@ -74,18 +78,27 @@ for my $shell (@shells) {
   my $ll = File::Temp->newdir();
   my $ll_dir = local::lib->normalize_path("$ll");
   local $ENV{PERL_LOCAL_LIB_ROOT};
-  local $ENV{PATH} = $root;
-  local $ENV{PERL5LIB} = $ENV{PERL5LIB};
   delete $ENV{PERL_LOCAL_LIB_ROOT};
+  local $ENV{PATH} = $root;
+  local $ENV{PERL5LIB};
+  delete $ENV{PERL5LIB};
   my $env = call_ll($shell, "$ll");
-  is $env->{PERL_LOCAL_LIB_ROOT}, $ll_dir, "$shell->{name}: activate root";
-  is $env->{PATH}, local::lib->install_base_bin_path($ll_dir)."$sep$root", "$shell->{name}: activate PATH";
+  is $env->{PERL_LOCAL_LIB_ROOT}, $ll_dir,
+    "$shell->{name}: activate root";
+  is $env->{PATH}, local::lib->install_base_bin_path($ll_dir)."$sep$root",
+    "$shell->{name}: activate PATH";
+  is $env->{PERL5LIB}, local::lib->install_base_perl_path($ll_dir),
+    "$shell->{name}: activate PERL5LIB";
 
   $ENV{$_} = $env->{$_} for qw(PATH PERL5LIB PERL_LOCAL_LIB_ROOT);
   $env = call_ll($shell, '--deactivate', "$ll");
 
-  is $env->{PERL_LOCAL_LIB_ROOT}, undef, "$shell->{name}: deactivate root";
-  is $env->{PATH}, $root, "$shell->{name}: deactivate PATH";
+  is $env->{PERL_LOCAL_LIB_ROOT}, undef,
+    "$shell->{name}: deactivate root";
+  is $env->{PATH}, $root,
+    "$shell->{name}: deactivate PATH";
+  is $env->{PERL5LIB}, undef,
+    "$shell->{name}: deactivate PERL5LIB";
 }
 
 sub call_ll {
@@ -94,19 +107,24 @@ sub call_ll {
 
   local $ENV{SHELL} = $info->{shell};
 
+  my $script
+    = `"$^X" $extra_lib -Mlocal::lib$option` . "\n"
+    . qq{$info->{perl} -Mt::lib::ENVDumper -e1\n};
+
   my $file = File::Temp->new(
     TEMPLATE => 'll-test-script-XXXXX',
     TMPDIR   => 1,
     SUFFIX   => '.'.$info->{ext},
   );
-
-  $file->print(scalar `"$^X" $extra_lib -Mlocal::lib$option` . "\n");
-  $file->print(qq{$info->{perl} -Mt::lib::ENVDumper -e1\n});
-  $file->close;
+  print { $file } $script;
+  close $file;
 
   my $opt = $info->{opt} ? "$info->{opt} " : '';
-  my $out = `"$info->{shell}" $opt"$file"`;
+  my $cmd = qq{"$info->{shell}" $opt"$file"};
+  my $out = `$cmd`;
   if ($?) {
+    diag "script:\n$script";
+    diag "running:\n$cmd";
     die "failed with code: $?";
   }
   my $VAR1;

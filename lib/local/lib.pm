@@ -8,7 +8,7 @@ use 5.006;
 use File::Spec ();
 use Config;
 
-our $VERSION = '2.000003'; # 2.0.3
+our $VERSION = '2.000004'; # 2.0.4
 $VERSION = eval $VERSION;
 
 sub import {
@@ -426,7 +426,7 @@ sub build_powershell_env_declaration {
   my $value = $class->_interpolate($args, '$env:%s', '"', '`%s');
 
   if (!$value) {
-    return qq{Remove-Item Env:\\$name;\n};
+    return qq{Remove-Item -ErrorAction 0 Env:\\$name;\n};
   }
 
   my $maybe_path_sep = qq{\$(if("\$env:$name"-eq""){""}else{"$_path_sep"})};
@@ -475,20 +475,6 @@ sub pipeline {
   }
 }
 
-=begin testing
-
-#:: test pipeline
-
-package local::lib;
-
-{ package Foo; sub foo { -$_[1] } sub bar { $_[1]+2 } sub baz { $_[1]+3 } }
-my $foo = bless({}, 'Foo');
-Test::More::ok($foo->${pipeline qw(foo bar baz)}(10) == -15);
-
-=end testing
-
-=cut
-
 sub resolve_path {
   my ($class, $path) = @_;
 
@@ -509,25 +495,6 @@ sub resolve_empty_path {
     '~/perl5';
   }
 }
-
-=begin testing
-
-#:: test classmethod setup
-
-my $c = 'local::lib';
-
-=end testing
-
-=begin testing
-
-#:: test classmethod
-
-is($c->resolve_empty_path, '~/perl5');
-is($c->resolve_empty_path('foo'), 'foo');
-
-=end testing
-
-=cut
 
 sub resolve_home_path {
   my ($class, $path) = @_;
@@ -558,17 +525,6 @@ sub resolve_relative_path {
   $path = File::Spec->rel2abs($path);
 }
 
-=begin testing
-
-#:: test classmethod
-
-local *File::Spec::rel2abs = sub { shift; 'FOO'.shift; };
-is($c->resolve_relative_path('bar'),'FOObar');
-
-=end testing
-
-=cut
-
 sub ensure_dir_structure_for {
   my ($class, $path) = @_;
   unless (-d $path) {
@@ -584,20 +540,6 @@ sub ensure_dir_structure_for {
   return;
 }
 
-=begin testing
-
-#:: test classmethod
-
-File::Path::rmtree('t/var/splat');
-
-$c->ensure_dir_structure_for('t/var/splat');
-
-ok(-d 't/var/splat');
-
-=end testing
-
-=cut
-
 sub guess_shelltype {
   my $shellbin
     = defined $ENV{SHELL}
@@ -612,12 +554,12 @@ sub guess_shelltype {
 
   for ($shellbin) {
     return
-        /csh/              ? 'csh'
-      : /command\.com/i    ? 'cmd'
-      : /cmd\.exe/i        ? 'cmd'
-      : /4nt\.exe/i        ? 'cmd'
-      : /powershell\.exe/i ? 'powershell'
-                           : 'bourne';
+        /csh$/                   ? 'csh'
+      : /command(?:\.com)?$/i    ? 'cmd'
+      : /cmd(?:\.exe)?$/i        ? 'cmd'
+      : /4nt(?:\.exe)?$/i        ? 'cmd'
+      : /powershell(?:\.exe)?$/i ? 'powershell'
+                                 : 'bourne';
   }
 }
 
