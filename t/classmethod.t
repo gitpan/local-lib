@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4;;
+use Test::More tests => 4;
 use File::Temp;
 
 use local::lib ();
@@ -13,13 +13,10 @@ my $c = 'local::lib';
 }
 
 {
-    no warnings 'once';
-    local *File::Spec::rel2abs = sub { shift; 'FOO'.shift; };
-    is($c->resolve_relative_path('bar'),'FOObar');
-}
-
-{
+    my $warn = '';
+    local $SIG{__WARN__} = sub { $warn .= $_[0] };
     my $dir = File::Temp::tempdir();
     $c->ensure_dir_structure_for("$dir/splat");
     ok(-d "$dir/splat");
+    like($warn, qr/^Attempting to create directory/);
 }

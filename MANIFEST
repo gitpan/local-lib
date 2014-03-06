@@ -1,17 +1,19 @@
 Changes
 eg/scripted_install.pl
+inc/ConfigCPAN.pm
 lib/lib/core/only.pm
 lib/local/lib.pm
 lib/POD2/DE/local/lib.pod
 lib/POD2/PT_BR/local/lib.pod
 maint/Makefile.PL.include
+maint/travis-install
+maint/travis-perlbrew
 Makefile.PL
 MANIFEST			This list of files
 t/bad_variables.t
 t/classmethod.t
 t/coderefs_in_inc.t
 t/de-dup.t
-t/install.t
 t/lib-core-only.t
 t/lib/ENVDumper.pm
 t/lib/TempDir.pm
@@ -21,6 +23,7 @@ t/stackable.t
 t/subroutine-in-inc.t
 t/taint-mode.t
 xt/bootstrap.t
+xt/install.t
 xt/release/cpan-changes.t
 xt/release/eol.t
 xt/release/kwalitee.t

@@ -4,34 +4,53 @@
       "mst - Matt S. Trout (cpan:MSTROUT) <mst@shadowcat.co.uk>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.82, CPAN::Meta::Converter version 2.132830",
+   "generated_by" : "ExtUtils::MakeMaker version 6.9, CPAN::Meta::Converter version 2.140630",
    "license" : [
       "perl_5"
    ],
    "meta-spec" : {
-      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "url" : "https://metacpan.org/pod/CPAN::Meta::Spec",
       "version" : "2"
    },
    "name" : "local-lib",
    "no_index" : {
       "directory" : [
          "t",
-         "inc",
-         "xt"
+         "inc"
       ]
    },
    "prereqs" : {
+      "build" : {
+         "requires" : {}
+      },
+      "configure" : {
+         "requires" : {}
+      },
+      "develop" : {
+         "requires" : {
+            "Capture::Tiny" : "0",
+            "Test::CPAN::Changes" : "0",
+            "Test::EOL" : "0",
+            "Test::NoTabs" : "0",
+            "Test::Pod" : "0"
+         }
+      },
       "runtime" : {
          "requires" : {
             "CPAN" : "1.82",
             "ExtUtils::Install" : "1.43",
             "ExtUtils::MakeMaker" : "6.74",
             "Module::Build" : "0.36",
-            "perl" : "v5.8.1"
+            "perl" : "5.006"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Test::More" : "0"
          }
       }
    },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "bugtracker" : {
          "mailto" : "bug-local-lib@rt.cpan.org",
@@ -42,10 +61,10 @@
       ],
       "repository" : {
          "type" : "git",
-         "url" : "git://git.shadowcat.co.uk/p5sagit/local-lib.git",
-         "web" : "http://git.shadowcat.co.uk/gitweb/gitweb.cgi?p=p5sagit/local-lib.git"
+         "url" : "git://github.com/Perl-Toolchain-Gang/local-lib",
+         "web" : "https://github.com/Perl-Toolchain-Gang/local-lib"
       },
       "x_IRC" : "irc://irc.perl.org/#local-lib"
    },
-   "version" : "2.000004"
+   "version" : "2.000_005"
 }

@@ -19,10 +19,11 @@ SYNOPSIS
 
       # Just print out useful shell commands
       $ perl -Mlocal::lib
-      export PERL_MB_OPT='--install_base /home/username/perl5'
-      export PERL_MM_OPT='INSTALL_BASE=/home/username/perl5'
-      export PERL5LIB="/home/username/perl5/lib/perl5"
-      export PATH="/home/username/perl5/bin:$PATH"
+      PERL_MB_OPT='--install_base /home/username/perl5'; export PERL_MB_OPT;
+      PERL_MM_OPT='INSTALL_BASE=/home/username/perl5'; export PERL_MM_OPT;
+      PERL5LIB="/home/username/perl5/lib/perl5"; export PERL5LIB;
+      PATH="/home/username/perl5/bin:$PATH"; export PATH;
+      PERL_LOCAL_LIB_ROOT="/home/usename/perl5:$PERL_LOCAL_LIB_ROOT"; export PERL_LOCAL_LIB_ROOT;
 
     From a .bashrc file -
 
@@ -475,11 +476,11 @@ LIMITATIONS
 
     *   Should probably auto-fixup CPAN config if not already done.
 
-    *   local::lib loads File::Spec. When used to set shell variables, this
-        isn't a problem. When used inside a perl script, any File::Spec
-        version inside the local::lib will be ignored. A workaround for this
-        is using "use lib "$ENV{HOME}/perl5/lib/perl5";" inside the script
-        instead of using "local::lib" directly.
+    *   On VMS and MacOS Classic (pre-OS X), local::lib loads File::Spec.
+        This means any File::Spec version installed in the local::lib will
+        be ignored by scripts using local::lib. A workaround for this is
+        using "use lib "$local_lib/lib/perl5";" instead of using
+        "local::lib" directly.
 
     *   Conflicts with ExtUtils::MakeMaker's "PREFIX" option. "local::lib"
         uses the "INSTALL_BASE" option, as it has more predictable and sane

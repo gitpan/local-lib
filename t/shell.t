@@ -8,18 +8,13 @@ use Config;
 use local::lib ();
 
 my @paths = File::Spec->path;
-my @ext = $^O eq 'MSWin32'  ? (split /\Q$Config{path_sep}/, $ENV{PATHEXT}) : ('');
 sub which {
   my $shell = shift;
-  for my $dir (@paths) {
-    my $file = File::Spec->catfile($dir||'.', $shell);
-    for my $ext (@ext) {
-      my $full = $file . $ext;
-      return $full
-        if -x $full;
-    }
-  }
-  return;
+  my ($full) =
+    grep { -x }
+    map { File::Spec->catfile( $_, $shell) }
+    File::Spec->path;
+  return $full;
 }
 
 my $extra_lib = '-I"' . dirname(dirname($INC{'local/lib.pm'})) . '"';
@@ -34,14 +29,17 @@ for my $shell (
     opt => '-f',
   },
   {
-    name => 'cmd',
+    name => 'fish',
+  },
+  {
+    name => 'cmd.exe',
     opt => '/Q /D /C',
     ext => 'bat',
     perl => qq{@"$^X"},
     skip => $^O eq 'cygwin',
   },
   {
-    name => 'powershell',
+    name => 'powershell.exe',
     opt => '-NoProfile -ExecutionPolicy Unrestricted -File',
     ext => 'ps1',
     perl => qq{& '$^X'},
@@ -82,10 +80,12 @@ for my $shell (@shells) {
   local $ENV{PATH} = $root;
   local $ENV{PERL5LIB};
   delete $ENV{PERL5LIB};
+  my $bin_path = local::lib->install_base_bin_path($ll_dir);
+  mkdir $bin_path;
   my $env = call_ll($shell, "$ll");
   is $env->{PERL_LOCAL_LIB_ROOT}, $ll_dir,
     "$shell->{name}: activate root";
-  is $env->{PATH}, local::lib->install_base_bin_path($ll_dir)."$sep$root",
+  like $env->{PATH}, qr/^\Q$bin_path$sep$root\E(?:$|\Q$sep\E)/,
     "$shell->{name}: activate PATH";
   is $env->{PERL5LIB}, local::lib->install_base_perl_path($ll_dir),
     "$shell->{name}: activate PERL5LIB";
@@ -95,7 +95,7 @@ for my $shell (@shells) {
 
   is $env->{PERL_LOCAL_LIB_ROOT}, undef,
     "$shell->{name}: deactivate root";
-  is $env->{PATH}, $root,
+  like $env->{PATH}, qr/^\Q$root\E(?:$|\Q$sep\E)/,
     "$shell->{name}: deactivate PATH";
   is $env->{PERL5LIB}, undef,
     "$shell->{name}: deactivate PERL5LIB";

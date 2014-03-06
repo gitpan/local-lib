@@ -1,18 +1,71 @@
+package local::lib;
+use 5.006;
 use strict;
 use warnings;
-
-package local::lib;
-
-use 5.006;
-
-use File::Spec ();
 use Config;
 
-our $VERSION = '2.000004'; # 2.0.4
+our $VERSION = '2.000_005'; # 2.0.5
 $VERSION = eval $VERSION;
+
+BEGIN {
+  *_WIN32 = ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'symbian')
+    ? sub(){1} : sub(){0};
+  # punt on these systems
+  *_USE_FSPEC = ($^O eq 'MacOS' || $^O eq 'VMS' || $INC{'File/Spec.pm'})
+    ? sub(){1} : sub(){0};
+}
+our $_DIR_JOIN = _WIN32 ? '\\' : '/';
+our $_DIR_SPLIT = (_WIN32 || $^O eq 'cygwin') ? qr{[\\/]}
+                                              : qr{/};
+our $_ROOT = _WIN32 ? do {
+  my $UNC = qr{[\\/]{2}[^\\/]+[\\/][^\\/]+};
+  qr{^(?:$UNC|[A-Za-z]:|)$_DIR_SPLIT};
+} : qr{^/};
+our ($_PERL) = $^X =~ /(.+)/; # $^X is internal how could it be tainted?!
+
+sub _cwd {
+  my $drive = shift;
+  local @ENV{qw(PATH IFS CDPATH ENV BASH_ENV)};
+  my $cmd = $drive ? "eval { Cwd::getdcwd(q($drive)) }"
+                   : 'getcwd';
+  my $cwd = `"$_PERL" -MCwd -le "print $cmd"`;
+  chomp $cwd;
+  if (!length $cwd && $drive) {
+    $cwd = $drive;
+  }
+  $cwd =~ s/$_DIR_SPLIT?$/$_DIR_JOIN/;
+  $cwd;
+}
+
+sub _catdir {
+  if (_USE_FSPEC) {
+    require File::Spec;
+    File::Spec->catdir(@_);
+  }
+  else {
+    my $dir = join($_DIR_JOIN, @_);
+    $dir =~ s{($_DIR_SPLIT)(?:\.?$_DIR_SPLIT)+}{$1}g;
+    $dir;
+  }
+}
+
+sub _rel2abs {
+  my ($dir, $base) = @_;
+  return $dir
+    if (_USE_FSPEC && require File::Spec)
+      ? File::Spec->file_name_is_absolute($dir)
+      : $dir =~ $_ROOT;
+
+  $base = _WIN32 && $dir =~ s/^([A-Za-z]:)// ? _cwd("$1")
+        : $base                              ? $base
+                                             : _cwd;
+  return _catdir($base, $dir);
+}
 
 sub import {
   my ($class, @args) = @_;
+  push @args, @ARGV
+    if $0 eq '-';
 
   my @steps;
   my %opts;
@@ -100,7 +153,6 @@ sub libs { $_[0]->{libs}   ||= [ \'PERL5LIB' ] }
 sub bins { $_[0]->{bins}   ||= [ \'PATH' ] }
 sub roots { $_[0]->{roots} ||= [ \'PERL_LOCAL_LIB_ROOT' ] }
 sub extra { $_[0]->{extra} ||= {} }
-sub shelltype { $_[0]->{shelltype} ||= $_[0]->guess_shelltype }
 sub no_create { $_[0]->{no_create} }
 
 my $_archname = $Config{archname};
@@ -135,21 +187,21 @@ my @_lib_subdirs = (
 
 sub install_base_bin_path {
   my ($class, $path) = @_;
-  return File::Spec->catdir($path, 'bin');
+  return _catdir($path, 'bin');
 }
 sub install_base_perl_path {
   my ($class, $path) = @_;
-  return File::Spec->catdir($path, 'lib', 'perl5');
+  return _catdir($path, 'lib', 'perl5');
 }
 sub install_base_arch_path {
   my ($class, $path) = @_;
-  File::Spec->catdir($class->install_base_perl_path($path), $_archname);
+  _catdir($class->install_base_perl_path($path), $_archname);
 }
 
 sub lib_paths_for {
   my ($class, $path) = @_;
   my $base = $class->install_base_perl_path($path);
-  return map { File::Spec->catdir($base, @$_) } @_lib_subdirs;
+  return map { _catdir($base, @$_) } @_lib_subdirs;
 }
 
 sub _mm_escape_path {
@@ -335,11 +387,12 @@ sub environment_vars_string {
 
   my $build_method = "build_${shelltype}_env_declaration";
 
+  my $extra = $self->extra;
   my @envs = (
     PATH                => $self->bins,
     PERL5LIB            => $self->libs,
     PERL_LOCAL_LIB_ROOT => $self->roots,
-    %{$self->extra},
+    map { $_ => $extra->{$_} } sort keys %$extra,
   );
   my $out = '';
   while (@envs) {
@@ -362,7 +415,7 @@ sub environment_vars_string {
     }
     $out .= $self->$build_method($name, $value);
   }
-  my $wrap_method = 'wrap_' . $self->shelltype . '_output';
+  my $wrap_method = "wrap_${shelltype}_output";
   if ($self->can($wrap_method)) {
     return $self->$wrap_method($out);
   }
@@ -380,7 +433,7 @@ sub build_bourne_env_declaration {
   $value =~ s/(^|\G|$_path_sep)\$$name$_path_sep/$1\$$name\${$name+$_path_sep}/g;
   $value =~ s/$_path_sep\$$name$/\${$name+$_path_sep}\$$name/;
 
-  qq{${name}="$value";\nexport ${name};\n}
+  qq{${name}="$value"; export ${name};\n}
 }
 
 sub build_csh_env_declaration {
@@ -438,6 +491,16 @@ sub build_powershell_env_declaration {
 sub wrap_powershell_output {
   my ($class, $out) = @_;
   return $out || " \n";
+}
+
+sub build_fish_env_declaration {
+  my ($class, $name, $args) = @_;
+  my $value = $class->_interpolate($args, '$%s', '"', '\\%s');
+  if (!defined $value) {
+    return qq{set -e $name;\n};
+  }
+  $value =~ s/$_path_sep/ /g;
+  qq{set -x $name $value;\n};
 }
 
 sub _interpolate {
@@ -498,11 +561,11 @@ sub resolve_empty_path {
 
 sub resolve_home_path {
   my ($class, $path) = @_;
-  return $path unless ($path =~ /^~/);
-  my ($user) = ($path =~ /^~([^\/]+)/); # can assume ^~ so undef for 'us'
+  $path =~ /^~([^\/]*)/ or return $path;
+  my $user = $1;
   my $homedir = do {
-    if (!defined $user && defined $ENV{HOME}) {
-      $ENV{HOME}
+    if (! length($user) && defined $ENV{HOME}) {
+      $ENV{HOME};
     }
     else {
       require File::Glob;
@@ -522,7 +585,7 @@ sub resolve_home_path {
 
 sub resolve_relative_path {
   my ($class, $path) = @_;
-  $path = File::Spec->rel2abs($path);
+  _rel2abs($path);
 }
 
 sub ensure_dir_structure_for {
@@ -543,11 +606,11 @@ sub ensure_dir_structure_for {
 sub guess_shelltype {
   my $shellbin
     = defined $ENV{SHELL}
-      ? (File::Spec->splitpath($ENV{SHELL}))[-1]
+      ? ($ENV{SHELL} =~ /([\w.]+)$/)[-1]
     : ( $^O eq 'MSWin32' && exists $ENV{'!EXITCODE'} )
       ? 'bash'
     : ( $^O eq 'MSWin32' && $ENV{PROMPT} && $ENV{COMSPEC} )
-      ? (File::Spec->splitpath($ENV{COMSPEC}))[-1]
+      ? ($ENV{COMSPEC} =~ /([\w.]+)$/)[-1]
     : ( $^O eq 'MSWin32' && !$ENV{PROMPT} )
       ? 'powershell.exe'
     : 'sh';
@@ -555,6 +618,7 @@ sub guess_shelltype {
   for ($shellbin) {
     return
         /csh$/                   ? 'csh'
+      : /fish/                   ? 'fish'
       : /command(?:\.com)?$/i    ? 'cmd'
       : /cmd(?:\.exe)?$/i        ? 'cmd'
       : /4nt(?:\.exe)?$/i        ? 'cmd'
@@ -591,10 +655,11 @@ From the shell -
 
   # Just print out useful shell commands
   $ perl -Mlocal::lib
-  export PERL_MB_OPT='--install_base /home/username/perl5'
-  export PERL_MM_OPT='INSTALL_BASE=/home/username/perl5'
-  export PERL5LIB="/home/username/perl5/lib/perl5"
-  export PATH="/home/username/perl5/bin:$PATH"
+  PERL_MB_OPT='--install_base /home/username/perl5'; export PERL_MB_OPT;
+  PERL_MM_OPT='INSTALL_BASE=/home/username/perl5'; export PERL_MM_OPT;
+  PERL5LIB="/home/username/perl5/lib/perl5"; export PERL5LIB;
+  PATH="/home/username/perl5/bin:$PATH"; export PATH;
+  PERL_LOCAL_LIB_ROOT="/home/usename/perl5:$PERL_LOCAL_LIB_ROOT"; export PERL_LOCAL_LIB_ROOT;
 
 From a .bashrc file -
 
@@ -1196,11 +1261,10 @@ not set, a Bourne-compatible shell is assumed.
 
 =item * Should probably auto-fixup CPAN config if not already done.
 
-=item * local::lib loads L<File::Spec>.  When used to set shell variables,
-this isn't a problem.  When used inside a perl script, any L<File::Spec>
-version inside the local::lib will be ignored.  A workaround for this is using
-C<use lib "$ENV{HOME}/perl5/lib/perl5";> inside the script instead of using
-C<local::lib> directly.
+=item * On VMS and MacOS Classic (pre-OS X), local::lib loads L<File::Spec>.
+This means any L<File::Spec> version installed in the local::lib will be
+ignored by scripts using local::lib.  A workaround for this is using
+C<use lib "$local_lib/lib/perl5";> instead of using C<local::lib> directly.
 
 =item * Conflicts with L<ExtUtils::MakeMaker>'s C<PREFIX> option.
 C<local::lib> uses the C<INSTALL_BASE> option, as it has more predictable and
