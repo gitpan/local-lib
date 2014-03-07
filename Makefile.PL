@@ -19,13 +19,18 @@ my %META = (
       'Module::Build'       => '0.36', # PERL_MB_OPT
       'CPAN'                => '1.82', # sudo support + CPAN::HandleConfig
     } },
-    develop   => { requires => {
-      'Test::CPAN::Changes' => 0,
-      'Test::EOL'     => 0,
-      'Test::NoTabs'  => 0,
-      'Test::Pod'     => 0,
-      'Capture::Tiny' => 0,
-    } },
+    develop   => {
+      requires => {
+        'Test::EOL'     => 0,
+        'Test::NoTabs'  => 0,
+        'Test::Pod'     => 0,
+        'Capture::Tiny' => 0,
+        'Test::More'    => 0.81_01,
+      },
+      recommends => {
+        'Test::CPAN::Changes' => 0,
+      },
+    },
   },
   resources => {
     repository => {
@@ -115,16 +120,12 @@ if ($ENV{PERL5_CPANM_IS_RUNNING}) {
   $requires->{CPAN} = undef;
 }
 for my $module (grep { $_ ne 'perl' } keys %$requires) {
-  my $v = $requires->{$module} or next;
-  open my $olderr, '>&', \*STDERR or die "Can't dup STDERR: $!";
-  open STDERR, '>', File::Spec->devnull or die "Can't open /dev/null: $!";
-  if (system $^X, "-m$module", '-e1') {
+  my $need_v = $requires->{$module} or next;
+  my $res = system($^X, '-Minc::CheckVersion', '-', $module, $need_v);
+  $res >>= 8;
+  if ($res == 0 || $res == 1) {
     $requires->{$module} = undef;
   }
-  elsif (! system $^X, "-M$module $v", '-e1') {
-    $requires->{$module} = undef;
-  }
-  open STDERR, '>&', $olderr or die "Can't dup to STDERR: $!";
 }
 
 if ($bootstrapping) {

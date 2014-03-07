@@ -1,13 +1,12 @@
 Changes
 eg/scripted_install.pl
+inc/CheckVersion.pm
 inc/ConfigCPAN.pm
 lib/lib/core/only.pm
 lib/local/lib.pm
 lib/POD2/DE/local/lib.pod
 lib/POD2/PT_BR/local/lib.pod
 maint/Makefile.PL.include
-maint/travis-install
-maint/travis-perlbrew
 Makefile.PL
 MANIFEST			This list of files
 t/bad_variables.t

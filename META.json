@@ -4,12 +4,12 @@
       "mst - Matt S. Trout (cpan:MSTROUT) <mst@shadowcat.co.uk>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.9, CPAN::Meta::Converter version 2.140630",
+   "generated_by" : "ExtUtils::MakeMaker version 6.9, CPAN::Meta::Converter version 2.140640",
    "license" : [
       "perl_5"
    ],
    "meta-spec" : {
-      "url" : "https://metacpan.org/pod/CPAN::Meta::Spec",
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : "2"
    },
    "name" : "local-lib",
@@ -27,10 +27,13 @@
          "requires" : {}
       },
       "develop" : {
+         "recommends" : {
+            "Test::CPAN::Changes" : "0"
+         },
          "requires" : {
             "Capture::Tiny" : "0",
-            "Test::CPAN::Changes" : "0",
             "Test::EOL" : "0",
+            "Test::More" : "0.8101",
             "Test::NoTabs" : "0",
             "Test::Pod" : "0"
          }
@@ -50,7 +53,7 @@
          }
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "mailto" : "bug-local-lib@rt.cpan.org",
@@ -66,5 +69,5 @@
       },
       "x_IRC" : "irc://irc.perl.org/#local-lib"
    },
-   "version" : "2.000_005"
+   "version" : "2.000006"
 }
