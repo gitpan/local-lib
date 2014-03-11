@@ -27,4 +27,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=local-lib
   license: http://dev.perl.org/licenses/
   repository: git://github.com/Perl-Toolchain-Gang/local-lib
-version: '2.000006'
+version: '2.000007'

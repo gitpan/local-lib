@@ -7,14 +7,29 @@ use File::Temp ();
 use Config;
 use local::lib ();
 
-my @paths = File::Spec->path;
+my @ext = $^O eq 'MSWin32' ? (split /\Q$Config{path_sep}/, $ENV{PATHEXT}) : ();
 sub which {
   my $shell = shift;
   my ($full) =
     grep { -x }
+    map { my $x = $_; $x, map { $x . $_ } @ext }
     map { File::Spec->catfile( $_, $shell) }
     File::Spec->path;
   return $full;
+}
+
+my %shell_path;
+{
+  my @shell_paths;
+  if (open my $fh, '<', '/etc/shells') {
+    my @lines = <$fh>;
+    s/^\s+//, s/\s+$// for @lines;
+    @shell_paths = grep { length && !/^#/ } @lines;
+  }
+  %shell_path =
+    map { m{[\\/]([^\\/]+)$} ? ($1 => $_) : () }
+    grep { defined && -x }
+    ( '/bin/sh', '/bin/csh', $ENV{'ComSpec'}, @shell_paths );
 }
 
 my $extra_lib = '-I"' . dirname(dirname($INC{'local/lib.pm'})) . '"';
@@ -25,7 +40,23 @@ for my $shell (
     name => 'sh',
   },
   {
+    name => 'dash',
+  },
+  {
+    name => 'bash',
+  },
+  {
+    name => 'zsh',
+  },
+  {
+    name => 'ksh',
+  },
+  {
     name => 'csh',
+    opt => '-f',
+  },
+  {
+    name => 'tcsh',
     opt => '-f',
   },
   {
@@ -36,24 +67,26 @@ for my $shell (
     opt => '/Q /D /C',
     ext => 'bat',
     perl => qq{@"$^X"},
-    skip => $^O eq 'cygwin',
+    skip => !$^O eq 'MSWin32',
   },
   {
     name => 'powershell.exe',
+    shell => which('powershell.exe'),
     opt => '-NoProfile -ExecutionPolicy Unrestricted -File',
     ext => 'ps1',
     perl => qq{& '$^X'},
-    skip => $^O eq 'cygwin',
+    skip => !$^O eq 'MSWin32',
   },
 ) {
   my $name = $shell->{name};
-  $shell->{shell} = which($name);
+  $shell->{shell} ||= $shell_path{$name};
   $shell->{ext}   ||= $name;
   $shell->{perl}  ||= qq{"$^X"};
   if (@ARGV) {
     next
       if !grep {$_ eq $name} @ARGV;
-    if (!$shell->{shell}) {
+    my $exec = $shell->{shell} ||= which($name);
+    if (!$exec) {
       warn "unable to find executable for $name";
       next;
     }
@@ -85,7 +118,7 @@ for my $shell (@shells) {
   my $env = call_ll($shell, "$ll");
   is $env->{PERL_LOCAL_LIB_ROOT}, $ll_dir,
     "$shell->{name}: activate root";
-  like $env->{PATH}, qr/^\Q$bin_path$sep$root\E(?:$|\Q$sep\E)/,
+  like $env->{PATH}, qr/^\Q$bin_path$sep\E/,
     "$shell->{name}: activate PATH";
   is $env->{PERL5LIB}, local::lib->install_base_perl_path($ll_dir),
     "$shell->{name}: activate PERL5LIB";
@@ -95,7 +128,7 @@ for my $shell (@shells) {
 
   is $env->{PERL_LOCAL_LIB_ROOT}, undef,
     "$shell->{name}: deactivate root";
-  like $env->{PATH}, qr/^\Q$root\E(?:$|\Q$sep\E)/,
+  unlike $env->{PATH}, qr/^\Q$bin_path$sep\E/,
     "$shell->{name}: deactivate PATH";
   is $env->{PERL5LIB}, undef,
     "$shell->{name}: deactivate PERL5LIB";
@@ -127,7 +160,6 @@ sub call_ll {
     diag "running:\n$cmd";
     die "failed with code: $?";
   }
-  my $VAR1;
-  eval $out or die "bad output: $@";
-  $VAR1;
+  my $env = eval $out or die "bad output: $@";
+  $env;
 }
