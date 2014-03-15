@@ -476,11 +476,11 @@ LIMITATIONS
 
     *   Should probably auto-fixup CPAN config if not already done.
 
-    *   local::lib loads File::Spec. When used to set shell variables, this
-        isn't a problem. When used inside a perl script, any File::Spec
-        version inside the local::lib will be ignored. A workaround for this
-        is using "use lib "$ENV{HOME}/perl5/lib/perl5";" inside the script
-        instead of using "local::lib" directly.
+    *   On VMS and MacOS Classic (pre-OS X), local::lib loads File::Spec.
+        This means any File::Spec version installed in the local::lib will
+        be ignored by scripts using local::lib. A workaround for this is
+        using "use lib "$local_lib/lib/perl5";" instead of using
+        "local::lib" directly.
 
     *   Conflicts with ExtUtils::MakeMaker's "PREFIX" option. "local::lib"
         uses the "INSTALL_BASE" option, as it has more predictable and sane
