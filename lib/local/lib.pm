@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config;
 
-our $VERSION = '2.000010'; # 2.0.10
+our $VERSION = '2.000011';
 $VERSION = eval $VERSION;
 
 BEGIN {
@@ -351,6 +351,12 @@ sub setup_local_lib_for {
 
 sub setup_local_lib {
   my $self = shift;
+
+  # if Carp is already loaded, ensure Carp::Heavy is also loaded, to avoid
+  # $VERSION mismatch errors (Carp::Heavy loads Carp, so we do not need to
+  # check in the other direction)
+  require Carp::Heavy if $INC{'Carp.pm'};
+
   $self->setup_env_hash;
   @INC = @{$self->inc};
 }
@@ -573,7 +579,7 @@ sub resolve_home_path {
     }
   };
   unless (defined $homedir) {
-    require Carp;
+    require Carp; require Carp::Heavy;
     Carp::croak(
       "Couldn't resolve homedir for "
       .(defined $user ? $user : 'current user')
