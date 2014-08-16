@@ -6,10 +6,10 @@
 
 use strict;
 use warnings;
+use Cwd; # load before anything else to work around ActiveState bug
 use Test::More tests => 4;
 use File::Temp 'tempfile';
 use File::Basename qw(basename dirname);
-use Cwd;
 use File::Spec;
 use IPC::Open3;
 use Config;
@@ -65,7 +65,7 @@ ok !grep($_ eq $dir2_lib, @libs),
   my $perl_file = basename($^X);
   if (!File::Spec->file_name_is_absolute($^X)) {
     my $perl_dir = dirname($^X);
-    $ENV{PATH} = join($Config{path_sep}, $ENV{PATH});
+    $ENV{PATH} = join($Config{path_sep}, $ENV{PATH}, $perl_dir);
   }
 
   my ($fh, $filename) = tempfile(
@@ -88,6 +88,6 @@ EOM
   my $pid = open3($in, $out, $err, $^X, map("-I$_", @INC_CLEAN), '-T', $filename);
   my $cwd = do { local $/; <$out> };
   $cwd =~ s/[\r\n]*\z//;
-  $cwd = Cwd::abs_path($cwd);
-  is $cwd, Cwd::cwd(), 'reimplemented cwd matches standard cwd';
+  $cwd = File::Spec->canonpath($cwd);
+  is $cwd, File::Spec->canonpath(Cwd::cwd()), 'reimplemented cwd matches standard cwd';
 }

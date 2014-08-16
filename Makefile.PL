@@ -26,6 +26,8 @@ my %META = (
         'Test::Pod'     => 0,
         'Capture::Tiny' => 0,
         'Test::More'    => 0.81_01,
+        'Test::MinimumVersion' => 0,
+        'Perl::MinimumVersion' => 1.35,
       },
       recommends => {
         'Test::CPAN::Changes' => 0,
@@ -188,7 +190,7 @@ $MM_ARGS{META_ADD} = { 'meta-spec' => { version => 2 }, %META }
 for (qw(configure build test runtime)) {
   my $key = $_ eq 'runtime' ? 'PREREQ_PM' : uc $_.'_REQUIRES';
   my $r = $MM_ARGS{$key} = {
-    %{$META{prereqs}{$_}{requires}},
+    %{$META{prereqs}{$_}{requires} || {}},
     %{delete $MM_ARGS{$key} || {}},
   };
   defined $r->{$_} or delete $r->{$_} for keys %$r;

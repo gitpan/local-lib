@@ -55,6 +55,13 @@ my $orig_dir = cwd;
 for my $dir_base (@dirs) {
   for my $dist_type (sort keys %dist_types) {
     chdir $orig_dir;
+    local @ENV{
+      'PERL_MM_OPT',
+      'PERL_MB_OPT',
+      'PERL_LOCAL_LIB_ROOT',
+      grep /^MAKE/, keys %ENV
+    };
+    local $ENV{PERL5LIB} = $ENV{PERL5LIB};
     my $temp = mk_temp_dir("install-$dist_type-XXXXX");
     my $ll_dir = "$dist_type-$dir_base";
     my $ll = "$temp/$ll_dir";

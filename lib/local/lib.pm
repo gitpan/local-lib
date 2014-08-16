@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config;
 
-our $VERSION = '2.000012';
+our $VERSION = '2.000013';
 $VERSION = eval $VERSION;
 
 BEGIN {
@@ -426,8 +426,6 @@ sub environment_vars_string {
 
   $shelltype ||= $self->guess_shelltype;
 
-  my $build_method = "build_${shelltype}_env_declaration";
-
   my $extra = $self->extra;
   my @envs = (
     PATH                => $self->bins,
@@ -435,6 +433,15 @@ sub environment_vars_string {
     PERL_LOCAL_LIB_ROOT => $self->roots,
     map { $_ => $extra->{$_} } sort keys %$extra,
   );
+  $self->_build_env_string($shelltype, \@envs);
+}
+
+sub _build_env_string {
+  my ($self, $shelltype, $envs) = @_;
+  my @envs = @$envs;
+
+  my $build_method = "build_${shelltype}_env_declaration";
+
   my $out = '';
   while (@envs) {
     my ($name, $value) = (shift(@envs), shift(@envs));
@@ -457,21 +464,21 @@ sub environment_vars_string {
 
 sub build_bourne_env_declaration {
   my ($class, $name, $args) = @_;
-  my $value = $class->_interpolate($args, '$%s', '"', '\\%s');
+  my $value = $class->_interpolate($args, '${%s}', qr/["\\\$!`]/, '\\%s');
 
   if (!defined $value) {
     return qq{unset $name;\n};
   }
 
-  $value =~ s/(^|\G|$_path_sep)\$$name$_path_sep/$1\$$name\${$name+$_path_sep}/g;
-  $value =~ s/$_path_sep\$$name$/\${$name+$_path_sep}\$$name/;
+  $value =~ s/(^|\G|$_path_sep)\$\{$name\}$_path_sep/$1\${$name}\${$name+$_path_sep}/g;
+  $value =~ s/$_path_sep\$\{$name\}$/\${$name+$_path_sep}\${$name}/;
 
   qq{${name}="$value"; export ${name};\n}
 }
 
 sub build_csh_env_declaration {
   my ($class, $name, $args) = @_;
-  my ($value, @vars) = $class->_interpolate($args, '$%s', '"', '"\\%s"');
+  my ($value, @vars) = $class->_interpolate($args, '${%s}', '"', '"\\%s"');
   if (!defined $value) {
     return qq{unsetenv $name;\n};
   }
@@ -482,9 +489,9 @@ sub build_csh_env_declaration {
   }
 
   my $value_without = $value;
-  if ($value_without =~ s/(?:^|$_path_sep)\$$name(?:$_path_sep|$)//g) {
-    $out .= qq{if "\$$name" != '' setenv $name "$value";\n};
-    $out .= qq{if "\$$name" == '' };
+  if ($value_without =~ s/(?:^|$_path_sep)\$\{$name\}(?:$_path_sep|$)//g) {
+    $out .= qq{if "\${$name}" != '' setenv $name "$value";\n};
+    $out .= qq{if "\${$name}" == '' };
   }
   $out .= qq{setenv $name "$value_without";\n};
   return $out;
@@ -492,7 +499,7 @@ sub build_csh_env_declaration {
 
 sub build_cmd_env_declaration {
   my ($class, $name, $args) = @_;
-  my $value = $class->_interpolate($args, '%%%s%%', qr([()!^"<>&|]), '^%s');
+  my $value = $class->_interpolate($args, '%%%s%%', qr(%), '%s');
   if (!$value) {
     return qq{\@set $name=\n};
   }
@@ -500,10 +507,10 @@ sub build_cmd_env_declaration {
   my $out = '';
   my $value_without = $value;
   if ($value_without =~ s/(?:^|$_path_sep)%$name%(?:$_path_sep|$)//g) {
-    $out .= qq{\@if not "%$name%"=="" set $name=$value\n};
+    $out .= qq{\@if not "%$name%"=="" set "$name=$value"\n};
     $out .= qq{\@if "%$name%"=="" };
   }
-  $out .= qq{\@set $name=$value_without\n};
+  $out .= qq{\@set "$name=$value_without"\n};
   return $out;
 }
 
@@ -528,7 +535,7 @@ sub wrap_powershell_output {
 
 sub build_fish_env_declaration {
   my ($class, $name, $args) = @_;
-  my $value = $class->_interpolate($args, '$%s', qr/[" ]/, '\\%s');
+  my $value = $class->_interpolate($args, '$%s', qr/[\\"' ]/, '\\%s');
   if (!defined $value) {
     return qq{set -e $name;\n};
   }
