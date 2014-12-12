@@ -4,7 +4,7 @@
       "mst - Matt S. Trout (cpan:MSTROUT) <mst@shadowcat.co.uk>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.141520",
+   "generated_by" : "ExtUtils::MakeMaker version 7, CPAN::Meta::Converter version 2.142690",
    "license" : [
       "perl_5"
    ],
@@ -44,7 +44,7 @@
          "requires" : {
             "CPAN" : "1.82",
             "ExtUtils::Install" : "1.43",
-            "ExtUtils::MakeMaker" : "6.74",
+            "ExtUtils::MakeMaker" : "7.00",
             "Module::Build" : "0.36",
             "perl" : "5.006"
          }
@@ -71,5 +71,5 @@
       },
       "x_IRC" : "irc://irc.perl.org/#local-lib"
    },
-   "version" : "2.000014"
+   "version" : "2.000015"
 }

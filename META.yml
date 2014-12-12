@@ -6,7 +6,7 @@ build_requires:
   Test::More: '0'
 configure_requires: {}
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.141520'
+generated_by: 'ExtUtils::MakeMaker version 7, CPAN::Meta::Converter version 2.142690'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -19,7 +19,7 @@ no_index:
 requires:
   CPAN: '1.82'
   ExtUtils::Install: '1.43'
-  ExtUtils::MakeMaker: '6.74'
+  ExtUtils::MakeMaker: '7.00'
   Module::Build: '0.36'
   perl: '5.006'
 resources:
@@ -27,4 +27,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=local-lib
   license: http://dev.perl.org/licenses/
   repository: git://github.com/Perl-Toolchain-Gang/local-lib
-version: '2.000014'
+version: '2.000015'

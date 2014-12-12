@@ -14,7 +14,7 @@ my %META = (
     } },
     runtime => { requires => {
       'perl'                => 5.006,
-      'ExtUtils::MakeMaker' => '6.74', # version PERL_MM_OPT is shell parsed
+      'ExtUtils::MakeMaker' => '7.00', # version INSTALL_BASE taken as string, not shell
       'ExtUtils::Install'   => '1.43', # version INSTALL_BASE was added
       'Module::Build'       => '0.36', # PERL_MB_OPT
       'CPAN'                => '1.82', # sudo support + CPAN::HandleConfig
@@ -135,11 +135,12 @@ if ($bootstrapping) {
     qw(ExtUtils::MakeMaker ExtUtils::Install Module::Build CPAN);
 
   no warnings 'once';
-  *MY::postamble = sub {
-    <<"END";
-PERL     += -I\$(INSTALLPRIVLIB)
-FULLPERL += -I\$(INSTALLPRIVLIB)
-END
+  package MY;
+  *MY::init_PERL = sub {
+    my $self = shift;
+    $self->SUPER::init_PERL(@_);
+    $self->{PERL}     .= ' -I$(INSTALLPRIVLIB)';
+    $self->{FULLPERL} .= ' -I$(INSTALLPRIVLIB)';
   };
 
   local $ENV{PERL_AUTOINSTALL_PREFER_CPAN} = 1;
